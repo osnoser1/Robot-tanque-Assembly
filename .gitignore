@@ -4,6 +4,7 @@ ehthumbs.db
 
 # Folder config file
 Desktop.ini
+Debug/
 
 # Recycle Bin used on file shares
 $RECYCLE.BIN/
@@ -16,6 +17,15 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+*.hex
+*.asmproj
+*.aps
+*.map
+*.aws
+*.bat
+*.tmp
+*.obj
 
 # =========================
 # Operating System Files
