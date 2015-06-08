@@ -45,6 +45,7 @@
 		.set firstTime = true
 		call initServo
 	.endif
+	pinMode(@1, OUTPUT)
 	assign16(servo_Pin(@0), @1)
 	assign16(servo_PulseWidth(@0), DEFAULT_PULSE_WIDTH)
 	assign32(servo_TiempoActual(@0), 0)
@@ -124,9 +125,9 @@
 	ldiw T2,@2
 	write16 servo_IsGiro(@0),T2
 	cpiw T2,1
-	jeq(EsIgual)
+	jeq(EsIgualServoGiro)
 		jmp EndServoGiro
-	EsIgual:
+	EsIgualServoGiro:
 		cpMillis(servo_TiempoActualGiro(@0), @1, i)
 		jlt(EndServoGiro)
 			copy32(servo_TiempoActualGiro(@0), tiempoEnMilis)
@@ -149,38 +150,38 @@
  	cpiw T2,true
  	jeq(EsIgual)	
  		write16 servo_IsGiro(@0),T2
- 		jmp EndServoGiro
+ 		jmp EndServoMicroGiro
  	EsIgual:
  		cpi16 servo_IsGiro(@0),true
- 		jeq(ContinueServoMicro)
- 			copy16(servo_barridoLimSup(@0), servo_Grados(@0))
- 			copy16(servo_barridoLimInf(@0), servo_Grados(@0))
+ 			jeq(ContinueServoMicro)
+ 		copy16(servo_barridoLimSup(@0), servo_Grados(@0))
+ 		copy16(servo_barridoLimInf(@0), servo_Grados(@0))
  		ContinueServoMicro:
  		assign16(servo_IsGiro(@0), true)
  		cpMillis(servo_TiempoActualGiro(@0), @1, i)
- 		jlt(EndServoGiro)
- 			copy32(servo_TiempoActualGiro(@0), tiempoEnMilis)
- 			assignToOther16lt servo_Sentido(@0),1,servo_Grados(@0),servo_barridoLimInf(@0),'i','v','v'
- 			assignToOther16ge servo_Sentido(@0),-1,servo_Grados(@0),servo_barridoLimSup(@0),'i','v','v'
- 			cp16 servo_Grados(@0), servo_barridoLimSup(@0)
- 			brge SumaEsp
- 				jmp EndSumaEsp
- 			SumaEsp:
- 				sumi16 servo_barridoLimSup(@0),10
- 			EndSumaEsp:
- 			cp16 servo_Grados(@0), servo_barridoLimInf(@0)
- 			brlt RestaEsp
- 				jmp EndRestaEsp
- 			RestaEsp:
- 				sumi16 servo_barridoLimInf(@0),-10
- 			EndRestaEsp:
- 			assignToOther16ge servo_barridoLimInf(@0),@3,servo_barridoLimSup(@0),@4,@5,'v',@6
- 			assignToOther16lt servo_barridoLimSup(@0),@4,servo_barridoLimInf(@0),@3,@6,'v',@5
- 			assign16ge servo_barridoLimSup(@0),@4,@4,@6,@6
- 			assign16lt servo_barridoLimInf(@0),@3,@3,@5,@5
- 			sum16 servo_Grados(@0),servo_Sentido(@0)
- 			Servo_write(@0, servo_Grados(@0), 'v')
-	EndServoGiro:
+ 			jlt(EndServoMicroGiro)
+		copy32(servo_TiempoActualGiro(@0), tiempoEnMilis)
+		assignToOther16lt servo_Sentido(@0),1,servo_Grados(@0),servo_barridoLimInf(@0),'i','v','v'
+		assignToOther16ge servo_Sentido(@0),-1,servo_Grados(@0),servo_barridoLimSup(@0),'i','v','v'
+		cp16 servo_Grados(@0), servo_barridoLimSup(@0)
+		brge SumaEsp
+			jmp EndSumaEsp
+		SumaEsp:
+			sumi16 servo_barridoLimSup(@0),10
+		EndSumaEsp:
+		cp16 servo_Grados(@0), servo_barridoLimInf(@0)
+		brlt RestaEsp
+			jmp EndRestaEsp
+		RestaEsp:
+			sumi16 servo_barridoLimInf(@0),-10
+		EndRestaEsp:
+		assignToOther16ge servo_barridoLimInf(@0),@3,servo_barridoLimSup(@0),@4,@5,'v',@6
+		assignToOther16lt servo_barridoLimSup(@0),@4,servo_barridoLimInf(@0),@3,@6,'v',@5
+		assign16ge servo_barridoLimSup(@0),@4,@4,@6,@6
+		assign16lt servo_barridoLimInf(@0),@3,@3,@5,@5
+		sum16 servo_Grados(@0),servo_Sentido(@0)
+		Servo_write(@0, servo_Grados(@0), 'v')
+	EndServoMicroGiro:
 .ENDM
 
 #endif // _SERVO_INC

@@ -13,6 +13,7 @@
 
 // #define pinMode(pin,mode) m_pinMode pin,mode
 #define pinMode(pin,mode) m_fast_pin_mode pin,mode
+#define pinMode_v_i(pin,mode) m_pinMode_v_i pin,mode
 #define digitalWrite(pin,value) m_digitalWrite pin,value,'v'
 #define digitalWritei(pin,value) m_digitalWrite pin,value,'i'
 #define digitalWriteFast(pin,value) CORE_INSTRUCCION(value) CORE_PORTREG(pin), CORE_BIT(pin)
@@ -298,6 +299,12 @@
 
 .MACRO m_pinMode
    	ldi rmp2,@0
+	ldi rmp3,@1
+	call PinModeSub
+.ENDMACRO
+
+.MACRO m_pinMode_v_i
+   	read8 rmp2,@0
 	ldi rmp3,@1
 	call PinModeSub
 .ENDMACRO

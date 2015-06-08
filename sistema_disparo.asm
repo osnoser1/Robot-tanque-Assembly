@@ -24,6 +24,7 @@
 // params @0 Variable
 .MACRO _sistema_disparo_update
 	Servo_update(disparo_Servo(@0))
+	// Servo_giro_3(disparo_Servo(@0), 4, true)
 .ENDM
 
 // params @0 Variable

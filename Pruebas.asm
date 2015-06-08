@@ -41,10 +41,10 @@
 #define sistemaDisparoPin 15
 
 // Sensores de linea
-#define SUPERIOR_DERECHA A0
-#define SUPERIOR_IZQUIERDA A1
-#define INFERIOR_IZQUIERDA A2
-#define INFERIOR_DERECHA A3 
+#define DERECHA A0
+#define IZQUIERDA A1
+#define CENTRO_IZQUIERDA A2
+#define CENTRO_DERECHA A3 
 
 #define EDO_ADELANTE 1
 #define EDO_DERECHA 2
@@ -90,10 +90,10 @@
 varAnalog: .BYTE 2
 varPwm: .BYTE 2
 tmpLinea: .BYTE 2
-valSuperiorDerecha: .BYTE 2
-valSuperiorIzquierda: .BYTE 2
-valInferiorDerecha: .BYTE 2
-valInferiorIzquierda: .BYTE 2
+valDerecha: .BYTE 2
+valIzquierda: .BYTE 2
+valCentroDerecha: .BYTE 2
+valCentroIzquierda: .BYTE 2
 varLedPin: .BYTE 2
 estadoActual: .BYTE 2
 tot_overflow: .BYTE 2
@@ -213,14 +213,14 @@ TIMER0_OVF_vect:
 
 // Prueba sensores linea
 .MACRO pruebaSensoresLinea
-	esNegro16 valSuperiorIzquierda,SUPERIOR_IZQUIERDA
-	esNegro16 valSuperiorDerecha,SUPERIOR_DERECHA
-	esNegro16 valInferiorIzquierda,INFERIOR_IZQUIERDA
-	esNegro16 valInferiorDerecha,INFERIOR_DERECHA
-	digitalWrite(vccA,valSuperiorIzquierda)
-	digitalWrite(gndA,valSuperiorDerecha)
-	digitalWrite(vccB,valInferiorIzquierda)
-	digitalWrite(gndB,valInferiorDerecha)
+	esNegro16 valIzquierda,IZQUIERDA
+	esNegro16 valDerecha,DERECHA
+	esNegro16 valCentroIzquierda,CENTRO_IZQUIERDA
+	esNegro16 valCentroDerecha,CENTRO_DERECHA
+	digitalWrite(vccA,valIzquierda)
+	digitalWrite(gndA,valDerecha)
+	digitalWrite(vccB,valCentroIzquierda)
+	digitalWrite(gndB,valCentroDerecha)
 .ENDM
 
 // Prueba controlador de motor
@@ -339,10 +339,10 @@ TIMER0_OVF_vect:
 .ENDM
 
 leerSensoresLinea:
-	esNegro16 valSuperiorIzquierda,SUPERIOR_IZQUIERDA
-	esNegro16 valSuperiorDerecha,SUPERIOR_DERECHA
-	esNegro16 valInferiorIzquierda,INFERIOR_IZQUIERDA
-	esNegro16 valInferiorDerecha,INFERIOR_DERECHA
+	esNegro16 valIzquierda,IZQUIERDA
+	esNegro16 valDerecha,DERECHA
+	esNegro16 valCentroIzquierda,CENTRO_IZQUIERDA
+	esNegro16 valCentroDerecha,CENTRO_DERECHA
 	ret
 
 .MACRO cmpSensoresLinea
@@ -356,18 +356,18 @@ leerSensoresLinea:
 .ENDM
 
 estadoIzquierda:
-	read16 V,valSuperiorIzquierda
-	read16 X,valSuperiorDerecha
-	read16 Y,valInferiorIzquierda
-	read16 Z,valInferiorDerecha
+	read16 V,valIzquierda
+	read16 X,valDerecha
+	read16 Y,valCentroIzquierda
+	read16 Z,valCentroDerecha
 	giroRapidoIzquierda
 	ret
 
 estadoAdelante:
-	read16 V,valSuperiorIzquierda
-	read16 X,valSuperiorDerecha
-	read16 Y,valInferiorIzquierda
-	read16 Z,valInferiorDerecha
+	read16 V,valIzquierda
+	read16 X,valDerecha
+	read16 Y,valCentroIzquierda
+	read16 Z,valCentroDerecha
 	cmpSensoresLinea 1,1,1,1
 		brne PC+8
 			assign16(estadoActual, EDO_IZQUIERDA)
@@ -513,10 +513,10 @@ Main:
 	// rcall InitTimer1Servo
 	// rcall InitTimer1Servo1
 	pinMode(ledPin, OUTPUT)
-	pinMode(SUPERIOR_IZQUIERDA, INPUT)
-	pinMode(SUPERIOR_DERECHA, INPUT)
-	pinMode(INFERIOR_IZQUIERDA, INPUT)
-	pinMode(INFERIOR_DERECHA, INPUT)
+	pinMode(IZQUIERDA, INPUT)
+	pinMode(DERECHA, INPUT)
+	pinMode(CENTRO_IZQUIERDA, INPUT)
+	pinMode(CENTRO_DERECHA, INPUT)
 	pinMode(vccA, OUTPUT)
 	pinMode(vccB, OUTPUT)
 	pinMode(gndA, OUTPUT)
@@ -524,90 +524,33 @@ Main:
 	assign16(estadoActual, EDO_ADELANTE)
 	assign16(varLedPin, 1)
 
-	long(tiempoBarrido, 0)
-	long(temp1_l, 0)
 	long(duration, 0)
 	long(tiempo_ping, 0)
-	int(limInferior, 0)
-	int(limSuperior, 180)
-	int(ticks_giro, 0)
-	// ldi32 N,167040
-	// ldiw V,180
-	// div_32_16 N,V,rmp1
-	// int(temp1,65535)
-	// int(temp2,0)
-	// m_mul16_16 temp1,temp2
-	// Servo(enemigo, 7)
-	// Servo(disparo, 8)
-	// Servo(prueba1, 12)
+
 	Servo(servo_ultrasonido, servoPin)
-	//SistDisparo(sist_disparo, sistemaDisparoPin)
+	//Servo(sist_disparo, 15)
+	SistDisparo(sist_disparo, sistemaDisparoPin)
 	//pinMode(15, OUTPUT)
 	//Servo_write(servo_ultrasonido, 30, 'i')
-	Servo_write(servo_ultrasonido, 90, 'i')
+	//Servo_write(servo_ultrasonido, 90, 'i')
 	//Servo_write(disparo, 0, 'i')
 	//Servo_write(prueba1, 180, 'i')
 	//Servo_write(prueba2, 180, 'i')
-	// array_set_elem_16(0, array_prueba, 50005,'i','v','i')
-	// array_set_elem_16(1, array_prueba, 50004,'i','v','i')
-	// array_set_elem_16(2, array_prueba, 50003,'i','v','i')
-	// array_set_elem_16(3, array_prueba, 50002,'i','v','i')
-	// array_set_elem_16(4, array_prueba, 50001,'i','v','i')
-	// assign16(temp1,0
-	// array_set_elem_16 (temp1,array_prueba,60001,'v','v','i')
-	// inc16 temp1
-	// array_set_elem_16 (temp1,array_prueba,60002,'v','v','i')
-	// inc16 temp1
-	// array_set_elem_16 (temp1,array_prueba,60003,'v','v','i')
-	// inc16 temp1
-	// array_set_elem_16 (temp1,array_prueba,60004,'v','v','i')
-	// inc16 temp1
-	// array_set_elem_16 (temp1,array_prueba,60005,'v','v','i')
 
-	// div32ui time,3
-	// int(temp, 53743)
-	// long(time, 333333333)
-	// pinMode(servoPin, OUTPUT)
-
-
-	// assign8(TCCR3A,(1<<WGM31)|(1<<COM3B1)
-	// assign8(TCCR3B,(1<<WGM33)|(1<<CS31)
-	//assign8(TCCR3B,(1<<WGM33)|(1<<CS31)|(1<<CS30)
-
-	// assign8(ICR3H,HIGH(39999)
-	// assign8(ICR3L,LOW(39999)
-	
-	//assign8(ICR3H,HIGH(4999)
-	//assign8(ICR3L,LOW(4999)
-
-	//pinMode(0, OUTPUT)
-	//pinMode(1, OUTPUT)
-	//pinMode(16, OUTPUT)
-	//pinMode(potenciometroPin, INPUT)
-	//pinMode(3, INPUT_PULLUP)
-// [Add all other init routines here]
-/*	ldi rmp1,1<<SE // enable sleep
-	out MCUCR,rmp1*/
-
-	//analogWritei 0,255
-	//analogWritei 1,255
-	//analogWritei 16,30
 //
 // ============================================
 //         P R O G R A M    L O O P
 // ============================================
 //
 Loop:
-/*	sleep // go to sleep
-	nop // dummy for wake up*/
-	// digitalWrite(ledPin, varLedPin)
-	// digitalWritei(ledPin, HIGHH)
+	//digitalWritei(ledPin, HIGHH)
 	Servo_update(servo_ultrasonido)
-	//SistDisparo_update(sist_disparo)
+	SistDisparo_update(sist_disparo)
+	//Servo_update(sist_disparo)
+	//Servo_giro_3(sist_disparo, 4, true)
 	//SistDisparo_press(sist_disparo)
-
-//	Servo_giro(servo_ultrasonido, 7)
-	// delay(500)
+	//Servo_giro_3(servo_ultrasonido, 4, true)
+	
 	cpMillis(tiempo_ping, 250, i)
 	jlt(EndTiempoPing)
 		copy32(tiempo_ping,tiempoEnMilis)
@@ -655,7 +598,7 @@ Loop:
 		div_32_16 N,T2,VH
 		ldiw T2,2
 		div_32_16 N,T2,VH
-		write32 duration,N
+		write32 duration,N 
 	EndTiempoPing:
 
 	cpi32 duration,60
@@ -663,51 +606,11 @@ Loop:
 		digitalWritei(ledPin, LOWW)
 		//Servo_giro_5(servo_ultrasonido, 7, true, 40, 140)
 		Servo_microGiro(servo_ultrasonido, 4, true)
-		//SistDisparo_press(sist_disparo)
-	 	// ldiw T2,true
-	 	// cpiw T2,1
-	 	// jeq(EsIgual)	
-	 	// 	write16 servo_IsGiro(servo_ultrasonido),T2
-	 	// 	jmp EndServoGiro
-	 	// EsIgual:
-	 	// 	cpi16 servo_IsGiro(servo_ultrasonido),1
-	 	// 	jeq(ContinueServoMicro)
-	 	// 		copy16(limSuperior,servo_Grados(servo_ultrasonido))
-	 	// 		copy16(limInferior,servo_Grados(servo_ultrasonido))
-	 	// 		//assign16(limSuperior, 140)
-	 	// 		//assign16(limInferior, 40)
-	 	// 	ContinueServoMicro:
-	 	// 	assign16(servo_IsGiro(servo_ultrasonido),true)
-	 	// 	cpMillis(ta_millis_giro, 4, i)
-	 	// 	jlt(EndServoGiro)
-	 	// 		copy32(ta_millis_giro, tiempoEnMillis)
-	 	// 		assignToOther16lt servo_Sentido(servo_ultrasonido),1,servo_Grados(servo_ultrasonido),limInferior,'i','v','v'
-	 	// 		assignToOther16ge servo_Sentido(servo_ultrasonido),-1,servo_Grados(servo_ultrasonido),limSuperior,'i','v','v'
-	 	// 		cp16 servo_Grados(servo_ultrasonido),limSuperior
-	 	// 		brge SumaEsp
-	 	// 			jmp EndSumaEsp
-	 	// 		SumaEsp:
-	 	// 			sumi16 limSuperior,10
-	 	// 		EndSumaEsp:
-	 	// 		cp16 servo_Grados(servo_ultrasonido),limInferior
-	 	// 		brlt RestaEsp
-	 	// 			jmp EndRestaEsp
-	 	// 		RestaEsp:
-	 	// 			sumi16 limInferior,-10
-	 	// 		EndRestaEsp:
-	 	// 		//add16lt limSuperior,servo_Grados(servo_ultrasonido),5,'v','i'
-	 	// 		// add16ge limInferior,servo_Grados(servo_ultrasonido),-5,'v','i'
-	 	// 		// sub16ge limInferior,30,1,'i','i'
-	 	// 		assignToOther16ge limInferior,30,limSuperior,145,'i','v','i'
-	 	// 		assignToOther16lt limSuperior,145,limInferior,30,'i','v','i'
-	 	// 		assign16ge limSuperior,145,145,'i','i'
-	 	// 		assign16lt limInferior,30,30,'i','i'
-	 	// 		sum16 servo_Grados(servo_ultrasonido),servo_Sentido(servo_ultrasonido)
-	 	// 		Servo_write(servo_ultrasonido, servo_Grados(servo_ultrasonido), 'v')
-		//EndServoGiro:
-		rjmp EndMenor
+		rjmp EndMenor 
 	Menor:
-		Servo_giro_3(servo_ultrasonido, 7, false)
+		Servo_microGiro(servo_ultrasonido, 4, false)
+		//Servo_giro_3(servo_ultrasonido, 7, false)
+		SistDisparo_press(sist_disparo)
 		digitalWritei(ledPin, HIGHH)
 	EndMenor:
 	

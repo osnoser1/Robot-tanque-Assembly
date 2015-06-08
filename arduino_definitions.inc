@@ -16,7 +16,7 @@
 #define INPUT_PULLUP 0x2
 
 #ifndef _BV
-#define _BV(n) 1<<(n)
+#define _BV(n) (1<<n)
 #endif
 
 #define CORE_NUM_TOTAL_PINS 46
@@ -411,21 +411,19 @@
 #error "Teensyduino only supports 16, 8, 4, 2, 1 MHz."
 #endif
 
-#ifndef cbi
-.MACRO m_cbi
-    .if @0 < 64
-        in rmp1,@0
-        andi rmp1,~_BV(@1)
-        out @0,rmp1
-    .else
-        lds rmp1,@0
-        andi rmp1,~_BV(@1)
-        sts @0,rmp1
-    .endif
-.ENDM
-#define cbi(sfr, bit) m_cbi sfr,bit
-
-#endif
+// #ifndef cbi
+// #define cbi_asm cb##i
+// .MACRO m_cbi
+//     .if @0 < 64
+//         cbi_asm @0,@1
+//     .else
+//         lds rmp1,@0
+//         andi rmp1,~(1<<@1)
+//         sts @0,rmp1
+//     .endif
+// .ENDM
+// #define cbi(sfr, bit) m_cbi sfr,bit
+// #endif
 #ifndef sbi
 .MACRO m_sbi
     .if @0 < 64
