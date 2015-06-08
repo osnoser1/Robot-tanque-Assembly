@@ -2,7 +2,7 @@
  * macro_utils.inc
  *
  *  Created: 2/7/2015 10:13:44 AM
- *   Author: AlfonsoAndrÈs
+ *   Author: AlfonsoAndr√©s
  */ 
 
 #ifndef _MACRO_UTILS_INC_
@@ -26,7 +26,7 @@
 #define array_set_elem_32(_el,_var,_val) assign32(array_dir_32(_var, _el),_val
 // #define array_dir_var_16(_var, _varIndex) m_array_dir_var_16 _
 
-// Operaciones para declaraciÛn de variables
+// Operaciones para declaraci√≥n de variables
 
 #define malloc(_var,_bytes) 	.DSEG _var: .BYTE _bytes .CSEG .EQU _var##EQU = _bytes
 #define byte(_var,_val) 		.DSEG _var: .BYTE SIZE_BYTE .CSEG .EQU _var##EQU = SIZE_BYTE assign8(_var,_val)
@@ -37,6 +37,8 @@
 #define SIZE_INT	2
 #define SIZE_LONG	4
 #define SIZE_BYTE	1
+#define MAX_LONG	0x7fffffff
+#define MAX_ULONG	MAX_LONG * 2 + 1
 
 // Operaciones con variables
 
@@ -65,7 +67,7 @@
 #define jlt(_dir) brsh PC+3 jmp _dir
 #define cpMillis(_var, _val, _type) CONCAT(m_compare_millis_,_type) _var, _val
 
-// Operaciones matem·ticas
+// Operaciones matem√°ticas
 
 #define map16(x,in_min,in_max,out_min,out_max) m_map16 x,in_min,in_max,out_min,out_max
 #define map16i(x,in_min,in_max,out_min,out_max) m_map16i x,in_min,in_max,out_min,out_max
@@ -74,7 +76,7 @@
 
 #define sei() sei
 #define cli() cli
-// ISR(vector) Pronto lo definirÈ
+// ISR(vector) Pronto lo definir√©
 
 // Banderas
 
@@ -98,6 +100,10 @@
 .DEF T3H = R21
 
 // Registros temporales de 32 bits
+.DEF LL1 = R12
+.DEF LL2 = R13
+.DEF LH1 = R14
+.DEF LH2 = R15
 
 .DEF ML1 = R16
 .DEF ML2 = R17
@@ -115,17 +121,18 @@
 .DEF OH2 = R27
 
 
+
 // *****************************************************************************
-// ManipulaciÛn registros, 8 bits
+// Manipulaci√≥n registros, 8 bits
 // *****************************************************************************
 
 // params @0 Rr
-// params @1 DirecciÛn de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO read8
 	lds @0,@1
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Rr
 .MACRO write8
 	sts @0,@1
@@ -160,7 +167,7 @@
 .ENDM
 
 // *****************************************************************************
-// ManipulaciÛn registros, 16 bits
+// Manipulaci√≥n registros, 16 bits
 // *****************************************************************************
 
 // params @0 Registro, 16 bits
@@ -213,13 +220,13 @@
 .ENDM
 
 // params @0 Par de registro
-// params @1 DirecciÛn de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO read16
 	read8 @0l,@1 // Parte baja
 	read8 @0h,@1+1 // Parte alta
 .ENDMACRO
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Par de registro
 .MACRO write16
 	write8 @0,@1l // Parte baja
@@ -287,7 +294,7 @@
 .ENDM
 
 // *****************************************************************************
-// ManipulaciÛn registros, 32 bits
+// Manipulaci√≥n registros, 32 bits
 // *****************************************************************************
 
 // params @0 Registro, 32 bits
@@ -367,7 +374,7 @@
 .ENDM
 
 // params @0 Registro, 32 bits
-// params @1 DirecciÛn de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO read32
 	read8 @0l1,@1
 	read8 @0l2,@1+1
@@ -376,7 +383,7 @@
 .ENDM
 
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Registro, 32 bits
 .MACRO write32
 	write8 @0,@1l1
@@ -402,7 +409,7 @@
 .ENDM
 
 // *****************************************************************************
-// ManipulaciÛn puertos, 8 bits
+// Manipulaci√≥n puertos, 8 bits
 // *****************************************************************************
 
 .MACRO andOnPort //.
@@ -412,7 +419,7 @@
 .ENDM
 
 // *****************************************************************************
-// ManipulaciÛn puertos, 16 bits
+// Manipulaci√≥n puertos, 16 bits
 // *****************************************************************************
 
 // params @0 Puerto de 16 bits
@@ -430,7 +437,7 @@
 .ENDM
 
 // *****************************************************************************
-// ManipulaciÛn de la SRAM, 8 bits
+// Manipulaci√≥n de la SRAM, 8 bits
 // *****************************************************************************
 
 // params @0 Variable
@@ -461,29 +468,29 @@
 	write8 @0,rmp1
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO m_copy8
 	read8 rmp1,@1
 	write8 @0,rmp1
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 .MACRO inc8
 	read8 rmp1,@0
 	inc rmp1
 	write8 @0,rmp1
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO cp8
 	read8 rmp2,@0
 	read8 rmp2,@1
 	cp rmp1,rmp2
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO cpi8
 	read8 rmp1,@0
@@ -491,17 +498,17 @@
 .ENDM
 
 // *****************************************************************************
-// ManipulaciÛn de la SRAM, 16 bits
+// Manipulaci√≥n de la SRAM, 16 bits
 // *****************************************************************************
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO m_copy16
 	read16 T1,@1
 	write16 @0,T1
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 // params @2 Valor inmediato
 // if((@0) == @1) (@0) = @2
@@ -512,7 +519,7 @@
 	EndAssignIf16:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 // params @2 Valor inmediato
 // params @3 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
@@ -539,7 +546,7 @@
 	EndAssign16ge:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 // params @2 Valor inmediato
 // params @3 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
@@ -566,7 +573,7 @@
 	EndAssign16lt:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 // params @2 Valor inmediato
 // params @3 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
@@ -593,7 +600,7 @@
 	EndAdd16lt:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 // params @2 Valor inmediato
 // params @3 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
@@ -620,7 +627,7 @@
 	EndAdd16ge:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 // params @2 Valor inmediato
 // params @3 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
@@ -647,7 +654,7 @@
 	EndSub16ge:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor a asignar
 // params @2 Valor a comparar 1
 // params @3 Valor a comparar 2
@@ -684,12 +691,12 @@
 			copy16(@0, @1)
 		.endif
 	.else
-		.error "Par·metro no v·lido"
+		.error "Par√°metro no v√°lido"
 	.endif
 	EndAssignToOther16ge:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor a asignar
 // params @2 Valor a comparar 1
 // params @3 Valor a comparar 2
@@ -726,23 +733,23 @@
 			copy16(@0, @1)
 		.endif
 	.else
-		.error "Par·metro no v·lido"
+		.error "Par√°metro no v√°lido"
 	.endif
 	EndAssignToOther16lt:
 .ENDM
 
 
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO cp16
 	read16 T1,@0
 	read16 T2,@1
 	cpw T1,T2
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO sum16 
 	read16 V,@0
 	read16 W,@1
@@ -750,7 +757,7 @@
 	write16 @0,V
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO sumi16 
 	read16 V,@0
@@ -759,8 +766,8 @@
 	write16 @0,V
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO sub16 
 	read16 V,@0
 	read16 W,@1
@@ -768,7 +775,7 @@
 	write16 @0,V
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO subi16 
 	read16 T1,@0
@@ -777,19 +784,19 @@
 	write16 @0,T1
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 .MACRO inc16
 	sumi16 @0,1
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO cpi16
 	read16 V,@0
 	cpiw V,@1 // Usa registro T
 .ENDMACRO
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 // params @2 Valor inmediato
 // params @3 Valor inmediato
@@ -804,23 +811,23 @@
 	EndTernario16i:
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 .MACRO true16
 	assign16(@0, 1)
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 .MACRO false16
 	assign16(@0, 0)
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 .MACRO negarBool16
 	ternario16i @0,1,0,1
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO m_mul16_16
 	read16 T1,@0
 	read16 T2,@1
@@ -828,7 +835,7 @@
 	write16 @0,T1
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO m_mul16_16i
 	read16 T1,@0
@@ -837,13 +844,13 @@
 	write16 @0,T1
 .ENDM
 
-// params @0 Õndice array
+// params @0 √çndice array
 // params @1 Array
 // params @2 Valor
 // params @3 Tipo @0: {'i': 'inmediato', 'v': 'variable'}
 // params @4 Tipo @1: {'p': 'puntero', 'v': 'variable'}
 // params @5 Tipo @2: {'i': 'inmediato', 'v': 'variable'}
-// LÌmite: 32000 el. aprox
+// L√≠mite: 32000 el. aprox
 .MACRO m_array_set_elem_16
 	.if @3 == 'v'
 		read16 V,@0
@@ -877,32 +884,32 @@
 	.endif
 .ENDM
 
-// params @0 Puntero para almacenar direcciÛn del elemento.
-// params @1 Variable, Ìndice del elemento.
-// params @2 Array - DirecciÛn del primer el.
-// params @3 Valor inmediato, tamaÒo de cada elemento (bytes).
+// params @0 Puntero para almacenar direcci√≥n del elemento.
+// params @1 Variable, √≠ndice del elemento.
+// params @2 Array - Direcci√≥n del primer el.
+// params @3 Valor inmediato, tama√±o de cada elemento (bytes).
 .MACRO m_array_get_dir_elem
 	assign16(@0, 0)
 	sum16 @0,@1
-	m_mul16_16i @0,@3 // En T1 est· almacenado @0, optimizo la operaciÛn
+	m_mul16_16i @0,@3 // En T1 est√° almacenado @0, optimizo la operaci√≥n
 	ldiw T2,@2
 	addw T1,T2
 	write16 @0,T1
 .ENDM
 
 // *****************************************************************************
-// ManipulaciÛn de la SRAM, 32 bits
+// Manipulaci√≥n de la SRAM, 32 bits
 // *****************************************************************************
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO m_copy32
 	read32 M,@1
 	write32 @0,M
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO cp32
 	read32 N,@0
 	read32 O,@1
@@ -918,15 +925,15 @@
 	cpr32 N,O // Usa M
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO cpi32
 	read32 N,@0
 	cpir32 N,@1
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO sum32
 	read32 M,@0
 	read32 N,@1
@@ -934,7 +941,7 @@
 	write32 @0,M
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO sumi32
 	read32 M,@0
@@ -943,13 +950,13 @@
 	write32 @0,M
 .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 .MACRO inc32
 	sumi32 @0,1
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 .MACRO sub32
 	read32 M,@0
 	read32 N,@1
@@ -957,15 +964,15 @@
 	write32 @0,M
 .ENDM
 
-// params @0 DirecciÛn de memoria
-// params @1 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
+// params @1 Direcci√≥n de memoria
 // .MACRO mult32
 // 	read32 M,@0
 // 	read32 N,@1
 // 	call suma32
 // .ENDM
 
-// params @0 DirecciÛn de memoria
+// params @0 Direcci√≥n de memoria
 // params @1 Valor inmediato
 .MACRO div32ui
 	read32 N,@0
@@ -1100,9 +1107,13 @@ _2div32_16:
 	push_two ZH,ZL
 	push_two R0,R1
 	push_two R2,R3
+	push_two R12,R13
+	push_two R14,R15
 .ENDM
 
 .MACRO pop_all
+	pop_two R14,R15
+	pop_two R12,R13
 	pop_two R2,R3
 	pop_two R0,R1
 	pop_two ZH,ZL
@@ -1118,18 +1129,18 @@ _2div32_16:
 .ENDM
 
 // *****************************************************************************
-// Nuevas macros para manejo de variables del mismo tamaÒo
+// Nuevas macros para manejo de variables del mismo tama√±o
 // *****************************************************************************
 
-// params @0 Constante, tamaÒo 1
-// params @1 Constante, tamaÒo 2
+// params @0 Constante, tama√±o 1
+// params @1 Constante, tama√±o 2
 .MACRO m_validate_two
 	.if @0 < @1 || @0 != SIZE_BYTE && @0 != SIZE_INT && @0 != SIZE_LONG || @1 != SIZE_BYTE && @1 != SIZE_INT && @1 != SIZE_LONG
 		.error "No se puede realizar operacion"
 	.endif
 .ENDM
 
-// params @0 Constante, tamaÒo variable
+// params @0 Constante, tama√±o variable
 .MACRO m_validate_one
 	.if @0 != SIZE_BYTE && @0 != SIZE_INT && @0 != SIZE_LONG
 		.error "No se puede realizar operacion: Dato no es byte, int o long"
@@ -1138,8 +1149,8 @@ _2div32_16:
 
 // params @0 Variable 1
 // params @1 Variable 2
-// params @2 Constante, tamaÒo @0
-// params @3 Constante, tamaÒo @1
+// params @2 Constante, tama√±o @0
+// params @3 Constante, tama√±o @1
 .MACRO m_copy
 	m_validate_two @2,@3
 	.if @2 == SIZE_BYTE && @3 == SIZE_BYTE
@@ -1168,7 +1179,7 @@ _2div32_16:
 
 // params @0 Variable
 // params @1 Constante, valor
-// params @2 Constante, tamaÒo @0
+// params @2 Constante, tama√±o @0
 .MACRO m_assign
 	m_validate_one @2
 	.if @2 == SIZE_BYTE
@@ -1196,7 +1207,7 @@ _2div32_16:
 	.elif @2 == 'i'
 		assign(@0, @1)
 	.else
-		.error "Par·metro no permitido"
+		.error "Par√°metro no permitido"
 	.endif
 .ENDM
 
@@ -1209,7 +1220,7 @@ _2div32_16:
 	.elif @2 == 'i'
 		assign16(@0, @1)
 	.else
-		.error "Par·metro no permitido"
+		.error "Par√°metro no permitido"
 	.endif
 .ENDM
 

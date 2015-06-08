@@ -371,7 +371,7 @@
 
 // wiring.c
 
-#define PULSEIN_CYCLES_PER_LOOP  7
+#define PULSEIN_CYCLES_PER_LOOP  17
 #define PULSEIN_CYCLES_LATENCY   5
 
 // params @0 Variable, 32 bits

@@ -524,7 +524,7 @@ Main:
 	assign16(estadoActual, EDO_ADELANTE)
 	assign16(varLedPin, 1)
 
-	long(duration, 0)
+	long(duration, MAX_ULONG)
 	long(tiempo_ping, 0)
 
 	Servo(servo_ultrasonido, servoPin)
@@ -544,14 +544,15 @@ Main:
 //
 Loop:
 	//digitalWritei(ledPin, HIGHH)
+	// digitalWrite(ledPin, varLedPin)
 	Servo_update(servo_ultrasonido)
+	// Servo_giro_3(servo_ultrasonido, 4, true)
 	SistDisparo_update(sist_disparo)
-	//Servo_update(sist_disparo)
-	//Servo_giro_3(sist_disparo, 4, true)
-	//SistDisparo_press(sist_disparo)
-	//Servo_giro_3(servo_ultrasonido, 4, true)
+	// Servo_update(sist_disparo)
+	// Servo_giro_3(sist_disparo, 4, true)
+	// SistDisparo_press(sist_disparo)
 	
-	cpMillis(tiempo_ping, 250, i)
+	cpMillis(tiempo_ping, 200, i)
 	jlt(EndTiempoPing)
 		copy32(tiempo_ping,tiempoEnMilis)
 		pinMode(pingPin, OUTPUT);
@@ -562,20 +563,37 @@ Loop:
 	  	digitalWritei(pingPin, LOWW);
 
 	  	pinMode(pingPin, INPUT);
-
 	  	//pulseIn(duration, pingPin, HIGH);
-  	
+
+		// convert the timeout from microseconds to a number of times through
+  		ldi32 O, 50000 * clockCyclesPerMicrosecond() / PULSEIN_CYCLES_PER_LOOP;
+  		mov32 L,O
+  		// Asignar a 0 'N': {'Duración'}, 'O': {'numLoops'}
 		clr32 N
+		clr32 O
+		// Valor de incremento de 'N', y 'O'
+		ldi32 M,1
+		// wait for any previous pulse to end
 		WhilePreviousPulse:
+			add32 O,M
+			cpr32 O,L
+			jeq(SalidaIncorrectaPingSensor)
 			sbic CORE_PIN_CONCATENATE(13, PINREG),CORE_PIN_CONCATENATE(13, BIT)
 			rjmp WhilePulseStop
 
+		// wait for the pulse to start
 		WhilePulseStart:
+			add32 O,M
+			cpr32 O,L
+			jeq(SalidaIncorrectaPingSensor)
 			sbis CORE_PIN_CONCATENATE(13, PINREG),CORE_PIN_CONCATENATE(13, BIT)
 			rjmp WhilePulseStart
 
-		ldi32 M,1
+		// wait for the pulse to stop
 		WhilePulseStop:
+			add32 O,M
+			cpr32 O,L
+			jeq(SalidaIncorrectaPingSensor)
 			add32 N,M
 			sbic CORE_PIN_CONCATENATE(13, PINREG),CORE_PIN_CONCATENATE(13, BIT)
 			rjmp WhilePulseStop
@@ -588,6 +606,7 @@ Loop:
 			dec rmp1
 			brne Mult_width
 		
+		SalidaCorrectaPingSensor:
 		addi32 N,PULSEIN_CYCLES_LATENCY
 		ldiw T2,clockCyclesPerMicrosecond()
 		div_32_16 N,T2,VH
@@ -599,6 +618,10 @@ Loop:
 		ldiw T2,2
 		div_32_16 N,T2,VH
 		write32 duration,N 
+		jmp EndTiempoPing
+
+		SalidaIncorrectaPingSensor:
+		assign32(duration, MAX_ULONG)
 	EndTiempoPing:
 
 	cpi32 duration,60
