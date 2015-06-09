@@ -438,6 +438,11 @@
 	div_32_16 N,T2,VH
 
 	write32 @0,N
+
+	rjmp EndPulseIn
+	SalidaIncorrectaPingSensor:
+	assign32(duration, MAX_ULONG)
+	EndPulseIn:
 .ENDM
 
 #endif

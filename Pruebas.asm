@@ -10,6 +10,7 @@
 .INCLUDE "servo_aux.inc"
 .INCLUDE "servo_impl_aux.asm"
 .INCLUDE "sistema_disparo.asm"
+.INCLUDE "Ping.asm"
 .LIST
 
 #define ledPin					6
@@ -335,25 +336,8 @@ Loop:
 	cpMillis(tiempo_ping, 100, i)
 	jlt(EndTiempoPing)
 		copy32(tiempo_ping,tiempoEnMilis)
-		pinMode(pingPin, OUTPUT);
-	  	digitalWritei(pingPin, LOWW);
-	  	delayMicroseconds(2);
-	  	digitalWritei(pingPin, HIGHH);
-	  	delayMicroseconds(5);
-	  	digitalWritei(pingPin, LOWW);
-
-	  	pinMode(pingPin, INPUT);
-	  	pulseIn(duration, 13, HIGHH);
-
-		ldiw T2,29
-		div_32_16 N,T2,VH
-		ldiw T2,2
-		div_32_16 N,T2,VH
-		write32 duration,N 
-		jmp EndTiempoPing
-
-		SalidaIncorrectaPingSensor:
-		assign32(duration, MAX_ULONG)
+		Ping_fire(duration, 13)
+		Ping_toCentimeters(duration)
 	EndTiempoPing:
 
 	cpi32 duration,60
