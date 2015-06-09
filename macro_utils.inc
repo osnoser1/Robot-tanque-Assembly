@@ -32,6 +32,9 @@
 #define byte(_var,_val) 		.DSEG _var: .BYTE SIZE_BYTE .CSEG .EQU _var##EQU = SIZE_BYTE assign8(_var,_val)
 #define int(_var,_val) 			.DSEG _var: .BYTE SIZE_INT .CSEG .EQU _var##EQU = SIZE_INT assign16(_var,_val)
 #define long(_var,_val) 		.DSEG _var: .BYTE SIZE_LONG .CSEG .EQU _var##EQU = SIZE_LONG assign32(_var,_val)
+#define byte_o(_var) 		.DSEG _var: .BYTE SIZE_BYTE .CSEG .EQU _var##EQU = SIZE_BYTE
+#define int_o(_var)		.DSEG _var: .BYTE SIZE_INT .CSEG .EQU _var##EQU = SIZE_INT
+#define long_o(_var) 		.DSEG _var: .BYTE SIZE_LONG .CSEG .EQU _var##EQU = SIZE_LONG
 
 // Constantes
 #define SIZE_INT	2

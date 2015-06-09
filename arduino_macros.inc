@@ -19,7 +19,7 @@
 #define digitalWriteFast(pin,value) CORE_INSTRUCCION(value) CORE_PORTREG(pin), CORE_BIT(pin)
 #define digitalWrite_v_i(pin,value) m_digitalWrite_v_i pin,value
 #define digitalWrite_v_v(pin,value) m_digitalWrite_v_v pin,value
-#define pulseIn(var,pin,state) m_pulse_in var,CORE_PINREG(pin),CORE_BIT(pin),state
+#define pulseIn(var,pin,state) m_pulse_in var,CORE_PIN_CONCATENATE(pin, PINREG),CORE_PIN_CONCATENATE(pin, BIT),state
 
 
 .MACRO cmp
@@ -379,33 +379,65 @@
 // params @2 Valor inmediato, bitreg
 // params @3 Valor inmediato, HIGH, LOW
 .MACRO m_pulse_in 
-	.DEF width = N
-	clr32 width
+	// convert the timeout from microseconds to a number of times through
+	ldi32 O, 50000 * clockCyclesPerMicrosecond() / PULSEIN_CYCLES_PER_LOOP;
+	mov32 L,O
+	// Asignar a 0 'N': {'Duración'}, 'O': {'numLoops'}
+	clr32 N
+	clr32 O
+	// Valor de incremento de 'N', y 'O'
+	ldi32 M,1
+	// wait for any previous pulse to end
+	WhilePreviousPulse:
+		add32 O,M
+		cpr32 O,L
+		jeq(SalidaIncorrectaPingSensor)
+		.if @3 == HIGHH
+			sbic @1,@2
+		.else
+			sbis @1,@2
+		.endif
+		rjmp WhilePulseStop
 
+	// wait for the pulse to start
 	WhilePulseStart:
-		sbis @1,@2
+		add32 O,M
+		cpr32 O,L
+		jeq(SalidaIncorrectaPingSensor)
+		.if @3 == HIGHH
+			sbis @1,@2
+		.else
+			sbic @1,@2
+		.endif
 		rjmp WhilePulseStart
 
-	ldi32 M,1
+	// wait for the pulse to stop
 	WhilePulseStop:
-		add32 width,M
-		sbic @1,@2
+		add32 O,M
+		cpr32 O,L
+		jeq(SalidaIncorrectaPingSensor)
+		add32 N,M
+		.if @3 == HIGHH
+			sbic @1,@2
+		.else
+			sbis @1,@2
+		.endif
 		rjmp WhilePulseStop
 
 	// (width * PULSEIN_CYCLES_PER_LOOP)
 	ldi rmp1,PULSEIN_CYCLES_PER_LOOP
-	mov32 O,width
+	mov32 O,N
 	Mult_width:
-		add32 width,O
+		add32 N,O
 		dec rmp1
 		brne Mult_width
-
-	addi32 width,PULSEIN_CYCLES_LATENCY
+	
+	SalidaCorrectaPingSensor:
+	addi32 N,PULSEIN_CYCLES_LATENCY
 	ldiw T2,clockCyclesPerMicrosecond()
 	div_32_16 N,T2,VH
 
 	write32 @0,N
-	.UNDEF width
 .ENDM
 
 #endif
