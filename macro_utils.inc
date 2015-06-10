@@ -46,6 +46,7 @@
 // Operaciones con variables
 
 #define cp_32_16(_var1,_var2) m_cp_32_16 _var1,_var2
+//#define copy16_32(_var,_var2) m_copy _var1, _var2
 
 #define copy(_var1,_var2) 	m_copy _var1,_var2,_var1##EQU,_var2##EQU
 #define copy8(_var1,_var2) 	m_copy _var1,_var2,SIZE_BYTE,SIZE_BYTE
@@ -993,7 +994,6 @@
 	copy32(temp_long, tiempoEnMilis)
 	sub32 temp_long,@0
 	cp_32_16(temp_long, @1)
-	
 .ENDM
 
 .MACRO m_compare_millis_i
@@ -1138,7 +1138,7 @@ _2div32_16:
 // params @0 Constante, tamaño 1
 // params @1 Constante, tamaño 2
 .MACRO m_validate_two
-	.if @0 < @1 || @0 != SIZE_BYTE && @0 != SIZE_INT && @0 != SIZE_LONG || @1 != SIZE_BYTE && @1 != SIZE_INT && @1 != SIZE_LONG
+	.if @0 != SIZE_BYTE && @0 != SIZE_INT && @0 != SIZE_LONG || @1 != SIZE_BYTE && @1 != SIZE_INT && @1 != SIZE_LONG
 		.error "No se puede realizar operacion"
 	.endif
 .ENDM
@@ -1163,8 +1163,13 @@ _2div32_16:
 	.elif @2 == SIZE_LONG && @3 == SIZE_LONG
 		m_copy32 @0,@1
 	.elif @2 == SIZE_INT
-		read8 rmp1,@1
-		clr rmp2
+		.if @3 == SIZE_BYTE
+			read8 rmp1,@1
+			clr rmp2
+		.else
+			read16 T1,@1
+			.warning "Se está copiando una variable de 32 bits a una de 16 bits"
+		.endif
 		write16 @0,T1
 	.elif @2 == SIZE_LONG
 		.if @3 == SIZE_INT

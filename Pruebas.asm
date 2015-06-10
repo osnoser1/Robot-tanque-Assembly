@@ -182,6 +182,8 @@ Setup:
 	pinMode(CENTRO_DERECHA, INPUT)
 	long(duration, MAX_ULONG)
 	long(tiempo_ping, 0)
+	long(tiempoActualLedPin, 0)
+	int(parpadeoLedPin, 0)
 	int(estadoActual, EDO_ADELANTE)
 	int(varLedPin, 1)
 	Servo(servo_ultrasonido, servoPin)
@@ -211,9 +213,23 @@ Loop:
 		Servo_microGiro(servo_ultrasonido, 4, true);
 		rjmp EndMenor 
 	Menor:
-		digitalWritei(ledPin, HIGHH);
 		Servo_microGiro(servo_ultrasonido, 4, false);
+		// Comprobar si puede disparar
+		cpi16 servo_Grados(servo_ultrasonido), 110
+			jge(EndCompareDisparo)
+		cpi16 servo_Grados(servo_ultrasonido), 70
+			jlt(EndCompareDisparo)
 		SistDisparo_press(sist_disparo);
+		EndCompareDisparo:
+		// Parpadeo del led
+		copy(parpadeoLedPin, duration);
+		map16i(parpadeoLedPin, 0, 60, 0, 384);
+		cpMillis(tiempoActualLedPin, parpadeoLedPin, v);
+			jlt(EndParpadeoLed)
+		copy32(tiempoActualLedPin, tiempoEnMilis)
+		negarBool16 varLedPin
+		EndParpadeoLed:
+		digitalWrite(ledPin, varLedPin);
 	EndMenor:
 	
 	//analogRead varAnalog,potenciometroPin
