@@ -50,8 +50,16 @@
 		Servo_microGiro(servo_ultrasonido, 4, true)
 		rjmp EndMenor 
 	Menor:
-		digitalWritei(ledPin, HIGHH)
 		Servo_microGiro(servo_ultrasonido, 4, false)
+		// Parpadeo del led
+		copy(parpadeoLedPin, duration);
+		map16i(parpadeoLedPin, 0, 60, 0, 384);
+		cpMillis(tiempoActualLedPin, parpadeoLedPin, v);
+			jlt(EndParpadeoLed)
+		copy32(tiempoActualLedPin, tiempoEnMilis)
+		negarBool16 varLedPin
+		EndParpadeoLed:
+		digitalWrite(ledPin, varLedPin);
 	EndMenor:
 .ENDM
 
