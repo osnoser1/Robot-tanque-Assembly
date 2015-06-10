@@ -209,9 +209,6 @@ Main:
 	out SPL,rmp1
 // Init Teensy
 	rcall InitTeensyInternal
-	// rcall InitTimer1ParpadeoLed
-	// rcall InitTimer1Servo
-	// rcall InitTimer1Servo1
 	call Setup
 
 //

@@ -5,7 +5,7 @@
 
 ;.INCLUDE "_Delays.asm" enables you to use the following macro in your code
 ;
-;	delayMicroseconds n
+;	m_delay_microseconds n
 ;		With  (1.000.000/F_CPU) <= n <= 25769803779/Your_CPU_frequency_in_MHz
 ;
 ; 	     This macro will generate a wait loop from 1 탎 to 25.769.803.779 탎
@@ -14,8 +14,8 @@
 ;            This is needed because we can not loop for less then 1
 ;            instruction cycle.
 ;	     25.769.803.779 탎, that's over 3h30 when you use a CPU running at 20 MHz.
-;        delayMicroseconds is absolutely exact down to (1/Your_CPU_frequency_in_MHz) 탎
-;        delayMicroseconds will pick the smallest code for your delay (Maximum 13 words)
+;        m_delay_microseconds is absolutely exact down to (1/Your_CPU_frequency_in_MHz) 탎
+;        m_delay_microseconds will pick the smallest code for your m_delay (Maximum 13 words)
                                     
 ;******************************************************************************
 ;How to use this in your code :
@@ -31,20 +31,24 @@
 ;
 ; C) Include the statement .INCLUDE "_Delays.asm" at the top of your program
 ;
-; D) Use the statement delayMicroseconds n, in your code
+; D) Use the statement m_delay_microseconds n, in your code
 ;
 ;Here is a code example :
 ;
-;	.INCLUDE "_Waiste.asm"		;Make the macro delayMicroseconds n available in your code
-;	delayMicroseconds 100				;loop for       100 탎 (that's  0,1 ms)
-;	delayMicroseconds 16000   			;loop for    16.000 탎 (that's 16   ms)
-;	delayMicroseconds 7000000			;loop for 7.000.000 탎 (that's  7   s )
+;	.INCLUDE "_Waiste.asm"		;Make the macro m_delay_microseconds n available in your code
+;	m_delay_microseconds 100				;loop for       100 탎 (that's  0,1 ms)
+;	m_delay_microseconds 16000   			;loop for    16.000 탎 (that's 16   ms)
+;	m_delay_microseconds 7000000			;loop for 7.000.000 탎 (that's  7   s )
 ;
             
 #ifndef _DELAYS_ASM_
-#define _DELAYS_ASM_                        
+#define _DELAYS_ASM_          
+
+#define delay(milliseconds) m_delay milliseconds
+#define delayMicroseconds(microseconds) m_delay_microseconds microseconds
+
 ;******************************************************************************
-;The CPU-speed needs to be set before you can use delayMicroseconds.
+;The CPU-speed needs to be set before you can use m_delay_microseconds.
 ;Find your CPU-speed in the list here below and uncomment it (remove the ";")
 ;then press Ctrl^S to save to disk otherwise the include file used by AVR studio
 ;will be the unchanged version on your disk.
@@ -96,23 +100,23 @@
 ;	.equ	F_CPU = 20000000 ;Hz
                                     
                                     
-.Macro delayMicroseconds ;n
-;	Calculate the number of CPU-cycles needed to generate the requested delay
+.macro m_delay_microseconds ;n
+;	Calculate the number of CPU-cycles needed to generate the requested m_delay
 ;	taking in to account the frequency you are using for your CPU.
 ;   You can simplify the next 9 lines of code before "_Cycle_Waister Cycles_Needed"
 ;   to "Cycles_Needed = @0 * F_CPU / 1000000". If you do so _Waist_us will
-;   generate the exact delay you requested or the delay obtained by executing the
-;   number of cpu-cycles that brings just less then the delay you requested.
-;   This might be a good option if you need a certain delay but need to be sure
-;   you never have a delay that is even a fraction of a CPU-cycle longer than the
-;   delay you requested.
+;   generate the exact m_delay you requested or the m_delay obtained by executing the
+;   number of cpu-cycles that brings just less then the m_delay you requested.
+;   This might be a good option if you need a certain m_delay but need to be sure
+;   you never have a m_delay that is even a fraction of a CPU-cycle longer than the
+;   m_delay you requested.
 ;	The 9 lines of code here below do NOT use any space in the actual program
 ;   memory of your AVR.
 ;	The code here below will actually pick the number of CPU-cycles needed to
-;   generate EXACTLY the delay you requested and when that can not be achieved
-;   it will select the number of cycles that generate the delay that is the best 
-;   approximation for the delay you requested even if that is just above the 
-;   delay you requested.
+;   generate EXACTLY the m_delay you requested and when that can not be achieved
+;   it will select the number of cycles that generate the m_delay that is the best 
+;   approximation for the m_delay you requested even if that is just above the 
+;   m_delay you requested.
     .set	Fraction = @0*F_CPU/1000000					;
     .set 	Fraction = Fraction * 100
     .set	Fraction = @0*F_CPU/10000 - Fraction
@@ -190,8 +194,8 @@
 .endmacro
 
 
-.MACRO delay
-	delayMicroseconds @0*1000
+.MACRO m_delay
+	m_delay_microseconds @0*1000
 .ENDM
 
 #endif

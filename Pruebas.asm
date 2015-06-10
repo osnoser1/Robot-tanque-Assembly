@@ -1,23 +1,16 @@
-/*
- * Pruebas.asm
- *
- *  Created: 1/31/2015 9:49:46 PM
- *   Author: AlfonsoAndrés
- */ 
-
-.NOLIST
-.INCLUDE "WProgram.asm"
-.INCLUDE "servo_aux.inc"
-.INCLUDE "servo_impl_aux.asm"
-.INCLUDE "sistema_disparo.asm"
-.INCLUDE "Ping.asm"
-.LIST
+#include "WProgram.asm"
+#include "servo_aux.inc"
+#include "servo_impl_aux.asm"
+#include "sistema_disparo.asm"
+#include "Ping.asm"
+#include "Motores.asm"
+#include "casos_de_prueba.inc"
 
 #define ledPin					6
-#define vccA					3
-#define gndA					2
-#define vccB					1
-#define gndB					0
+#define vccA					3	// Izquierdo
+#define gndA					2	// Izquierdo
+#define vccB					1	// Derecho
+#define gndB					0	// Derecho
 #define pingPin					13
 #define servoPin				14
 #define sistemaDisparoPin		15
@@ -40,41 +33,6 @@ int_o(valDerecha);
 int_o(valIzquierda);
 int_o(valCentroDerecha);
 int_o(valCentroIzquierda);
-// int_o(tot_overflow);
-
-// Prueba sensores linea
-.MACRO pruebaSensoresLinea
-	esNegro16 valIzquierda,IZQUIERDA
-	esNegro16 valDerecha,DERECHA
-	esNegro16 valCentroIzquierda,CENTRO_IZQUIERDA
-	esNegro16 valCentroDerecha,CENTRO_DERECHA
-	digitalWrite(vccA,valIzquierda)
-	digitalWrite(gndA,valDerecha)
-	digitalWrite(vccB,valCentroIzquierda)
-	digitalWrite(gndB,valCentroDerecha)
-.ENDM
-
-// Prueba controlador de motor
-.MACRO pruebaControladorMotor
-	adelante
-	delay 3000
-	retroceso
-	delay 3000
-	giroRapidoIzquierda
-	delay 3000
-	giroRapidoDerecha
-	delay 3000
-	detener
-	delay 3000
-	giroDerecha
-	delay 3000
-	detener
-	delay 3000
-	giroIzquierda
-	delay 3000
-	detener
-	delay 3000
-.ENDM
 
 // Control sensor de linea
 
@@ -104,71 +62,6 @@ int_o(valCentroIzquierda);
 	EndEsBlanco:
 .ENDM
 
-// Control motor
-
-// params @0 vccPin
-// params @1 gndPin
-.MACRO motorAdelante
-	digitalWritei(@0, HIGHH)
-	digitalWritei(@1, LOWW)
-.ENDM
-
-.MACRO motorAdelantePwmi
-	analogWritei @0,@2
-	digitalWritei(@1, LOWW)
-.ENDM
-
-// params vccPin
-// params gndPin
-.MACRO motorDetener
-	digitalWritei(@0, LOWW)
-	digitalWritei(@1, LOWW)
-.ENDM
-
-// params vccPin
-// params gndPin
-.MACRO motorRetroceso
-	digitalWritei(@0, LOWW)
-	digitalWritei(@1, HIGHH)
-.ENDM
-
-// Control ambos motores
-
-.MACRO adelante
-	motorAdelante vccA,gndA
-	motorAdelante vccB,gndB
-.ENDM
-
-.MACRO detener
-	motorDetener vccA,gndA
-	motorDetener vccB,gndB
-.ENDM
-
-.MACRO retroceso
-	motorRetroceso vccA,gndA
-	motorRetroceso vccB,gndB
-.ENDM
-
-.MACRO giroRapidoDerecha
-	motorAdelante vccA,gndA
-	motorRetroceso vccB,gndB
-.ENDM
-
-.MACRO giroRapidoIzquierda
-	motorRetroceso vccA,gndA
-	motorAdelante vccB,gndB
-.ENDM
-
-.MACRO giroDerecha
-	motorAdelante vccA,gndA
-	motorDetener vccB,gndB
-.ENDM
-
-.MACRO giroIzquierda
-	motorDetener vccA,gndA
-	motorAdelante vccB,gndB
-.ENDM
-
 leerSensoresLinea:
 	esNegro16 valIzquierda,IZQUIERDA
 	esNegro16 valDerecha,DERECHA
@@ -191,7 +84,7 @@ estadoIzquierda:
 	read16 X,valDerecha
 	read16 Y,valCentroIzquierda
 	read16 Z,valCentroDerecha
-	giroRapidoIzquierda
+	Motores_giroRapidoIzquierda()
 	ret
 
 estadoAdelante:
@@ -221,7 +114,7 @@ estadoAdelante:
 		
 	rjmp CompGiroDerecha
 	EdoAdelante:
-		adelante
+		Motores_adelante()
 		rjmp EndEstadoAdelante
 
 
@@ -239,7 +132,7 @@ estadoAdelante:
 	rjmp CompGiroIzquierda
 
 	EdoGiroDerecha:
-		giroDerecha
+		Motores_giroDerecha()
 		rjmp EndEstadoAdelante
 
 	CompGiroIzquierda:
@@ -253,15 +146,15 @@ estadoAdelante:
 		breq EdoGiroIzquierda
 	rjmp EdoDetener
 	EdoGiroIzquierda:
-		giroIzquierda
+		Motores_giroIzquierda()
 		rjmp EndEstadoAdelante
 	EdoDetener:
-		detener
+		Motores_detener()
 	EndEstadoAdelante:
 	ret
 
 estadoDetenido:
-	detener
+	Motores_detener()
 	ret
 
 actualizar:
@@ -280,38 +173,13 @@ actualizar:
 	EndSwitchEstado:
 	ret
 
-.MACRO pruebaLedPinTimer
-
-.ENDM
-
-InitTimer1ParpadeoLed:
-	assign8(TCCR1A, 0) // actualizando InitTeensyInternal
-	assign8(TCCR1B, (1<<CS11)) // div 8 prescaler
-	assign8(TIMSK1, (1<<TOIE1)) // Habilitar interrupción de desbordamiento
-	assign16(TCNT1L, 0) // clear the timer count 
-//	assign16(tot_overflow, 0)
-	ret
-
-InitTimer1Servo1:
-	assign8(TCCR1A, 0) 
-	// assign8(TCCR1B,(1<<CS11) // div 8 prescaler
-	assign8(TCCR1B, (1<<WGM12)|(1 << CS11)) // div 256 prescaler and ctc mode
-	assign16(TCNT1L, 0) // clear the timer count 
-	// assign16(OCR1AL,62499 // set top
-	assign16(OCR1AL, 40000) // set top
-	assign8(TIMSK1, (1<<OCIE1A)) // enable the output compare interrupt 
-	ret
-
 Setup:
+	Motores(vccA, gndA, vccB, gndB) // {izquierdo, derecho}
 	pinMode(ledPin, OUTPUT)
 	pinMode(IZQUIERDA, INPUT)
 	pinMode(DERECHA, INPUT)
 	pinMode(CENTRO_IZQUIERDA, INPUT)
 	pinMode(CENTRO_DERECHA, INPUT)
-	pinMode(vccA, OUTPUT)
-	pinMode(vccB, OUTPUT)
-	pinMode(gndA, OUTPUT)
-	pinMode(gndB, OUTPUT)
 	long(duration, MAX_ULONG)
 	long(tiempo_ping, 0)
 	int(estadoActual, EDO_ADELANTE)
@@ -327,28 +195,25 @@ Setup:
 Loop:
 	//digitalWritei(ledPin, HIGHH)
 	// digitalWrite(ledPin, varLedPin)
+
 	Servo_update(servo_ultrasonido)
-	// Servo_giro_3(servo_ultrasonido, 4, true)
-	SistDisparo_update(sist_disparo)
-	// Servo_update(sist_disparo)
-	// Servo_giro_3(sist_disparo, 4, true)
-	// SistDisparo_press(sist_disparo)
-	cpMillis(tiempo_ping, 100, i)
+	SistDisparo_update(sist_disparo);
+	cpMillis(tiempo_ping, 100, i);
 	jlt(EndTiempoPing)
-		copy32(tiempo_ping,tiempoEnMilis)
-		Ping_fire(duration, 13)
-		Ping_toCentimeters(duration)
+		copy32(tiempo_ping,tiempoEnMilis);
+		Ping_fire(duration, 13);
+		Ping_toCentimeters(duration);
 	EndTiempoPing:
 
 	cpi32 duration,60
 	jlt(Menor)
-		digitalWritei(ledPin, LOWW)
-		Servo_microGiro(servo_ultrasonido, 4, true)
+		digitalWritei(ledPin, LOWW);
+		Servo_microGiro(servo_ultrasonido, 4, true);
 		rjmp EndMenor 
 	Menor:
-		digitalWritei(ledPin, HIGHH)
-		Servo_microGiro(servo_ultrasonido, 4, false)
-		SistDisparo_press(sist_disparo)
+		digitalWritei(ledPin, HIGHH);
+		Servo_microGiro(servo_ultrasonido, 4, false);
+		SistDisparo_press(sist_disparo);
 	EndMenor:
 	
 	//analogRead varAnalog,potenciometroPin
@@ -362,7 +227,8 @@ Loop:
 
 	// pruebaSensoresLinea
 	// pruebaControladorMotor
-	// pruebaLedPinTimer
+	// pruebaLatchingPing
+	// pruebaSistemaDisparo
 
 	// call leerSensoresLinea
 	// call actualizar
