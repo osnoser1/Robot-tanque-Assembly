@@ -21,6 +21,7 @@
 #define array_get_dir_elem(_punt,_index,_var,_tam) m_array_get_dir_elem _punt,_index,_var,_tam
 #define array_dir_16(_var,_index) array_dir(_var, _index, SIZE_INT)
 #define array_dir_32(_var,_index) array_dir(_var, _index, SIZE_LONG)
+#define array_get_el_16(_var,_index,_array,_type1) m_array_get_el _var,_index,_array,_type1,'v'
 // #define array_set_elem_16(_el,_var,_val) assign16(array_dir_16(_var,_el),_val
 #define array_set_elem_16(_el,_var,_val,_type1,_type2,_type3) m_array_set_elem_16 _el,_var,_val,_type1,_type2,_type3
 #define array_set_elem_32(_el,_var,_val) assign32(array_dir_32(_var, _el),_val
@@ -140,6 +141,13 @@
 // params @1 Rr
 .MACRO write8
 	sts @0,@1
+.ENDM
+
+// params @0 Rr
+// params @1 Valor inmediato
+.MACRO andCp
+	ldi rmp1, @1
+	cpc @0,rmp1
 .ENDM
 
 // params @0 Rr
@@ -830,6 +838,17 @@
 	ternario16i @0,1,0,1
 .ENDM
 
+// params @0 Resultado, dirección de memoria
+// params @1 Dirección de memoria
+// params @2 Constante
+.MACRO m_mul16m_16i_32u
+	read16 T1,@1
+	ldiw T2,@2
+	call mpy16u
+	write16 @0,T2
+	write16 @0+2,T3
+.ENDM
+
 // params @0 Dirección de memoria
 // params @1 Dirección de memoria
 .MACRO m_mul16_16
@@ -886,6 +905,27 @@
 			stw X,T1
 		.endif
 	.endif
+.ENDM
+
+// params @0 Variable, 2 bytes.
+// params @1 Índice del elemento.
+// params @2 Array - Dirección del primer el.
+// params @3 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
+// params @4 Tipo @2: {'p': 'puntero', 'v': 'variable'}
+.MACRO m_array_get_el
+	.if @4 == 'p'
+		.error "ERROR, no implementado todavía"
+	.endif
+	.if @3 == 'i'
+		read16 T1, @2+@1*SIZE_INT
+	.else
+		ldiw X,@2
+		read16 T2,@1
+		mul_16i T2,SIZE_INT
+		addw X,T2
+		ldw T1,X
+	.endif
+	write16 @0,T1
 .ENDM
 
 // params @0 Puntero para almacenar dirección del elemento.
@@ -964,6 +1004,26 @@
 .MACRO sub32
 	read32 M,@0
 	read32 N,@1
+	call resta32
+	write32 @0,M
+.ENDM
+
+// params @0 Variable, 4 bytes
+// params @1 Variable, 2 bytes
+.MACRO sum32_16
+	read32 M,@0
+	read16 T3,@1
+	clrw W
+	call suma32
+	write32 @0,M
+.ENDM
+
+// params @0 Variable, 4 bytes
+// params @1 Variable, 2 bytes
+.MACRO sub32_16
+	read32 M,@0
+	read16 T3,@1
+	clrw W
 	call resta32
 	write32 @0,M
 .ENDM

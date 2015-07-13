@@ -29,10 +29,10 @@
 
 .MACRO ldie
 	breq EqualLdie // Si Z = 1, son iguales y bifurco a EqualLdie
-		ldi @0,@2 // Asigno el tercer par醡etro en el registro (primer par醡etro)
+		ldi @0,@2 // Asigno el tercer par谩metro en el registro (primer par谩metro)
 		rjmp EndLdie
 	EqualLdie:
-		ldi @0,@1 // Asigno el segundo par醡etro en el registro (primer par醡etro)
+		ldi @0,@1 // Asigno el segundo par谩metro en el registro (primer par谩metro)
 	EndLdie:
 .ENDMACRO
 
@@ -289,7 +289,7 @@
 	analogWrite8 @0,@1+1
 .ENDMACRO
 
-// params @0 Direcci髇 de memoria, 2 bytes
+// params @0 Direcci贸n de memoria, 2 bytes
 // params @1 Pin seleccionado
 .MACRO analogRead
 	ldiw X,@0
@@ -359,12 +359,12 @@
 
 // wiring.h
 
-// params @0 Direcci髇 de memoria, 4 bytes
+// params @0 Direcci贸n de memoria, 4 bytes
 // .MACRO clockCyclesToMicroseconds
 //  (a) / clockCyclesPerMicrosecond
 // .ENDM
 
-// params @0 Direcci髇 de memoria, 4 bytes
+// params @0 Direcci贸n de memoria, 4 bytes
 // .MACRO microsecondsToClockCycles
 //  ( (a) * clockCyclesPerMicrosecond() )
 // .ENDM
@@ -382,7 +382,7 @@
 	// convert the timeout from microseconds to a number of times through
 	ldi32 O, 50000 * clockCyclesPerMicrosecond() / PULSEIN_CYCLES_PER_LOOP;
 	mov32 L,O
-	// Asignar a 0 'N': {'Duraci髇'}, 'O': {'numLoops'}
+	// Asignar a 0 'N': {'Duraci贸n'}, 'O': {'numLoops'}
 	clr32 N
 	clr32 O
 	// Valor de incremento de 'N', y 'O'

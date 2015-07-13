@@ -424,9 +424,10 @@
 // .ENDM
 // #define cbi(sfr, bit) m_cbi sfr,bit
 // #endif
-#ifndef sbi
+#ifndef sbi_preview
 .MACRO m_sbi
     .if @0 < 64
+      .error "Tengo que revisar"
         in rmp1,@0
         ori rmp1,_BV(@1)
         out @0,rmp1
@@ -436,7 +437,7 @@
         sts @0,rmp1
     .endif
 .ENDM
-#define sbi(sfr, bit) m_sbi sfr,bit
+#define sbi_preview(sfr, bit) m_sbi sfr,bit
 #endif
 
 // wiring.h

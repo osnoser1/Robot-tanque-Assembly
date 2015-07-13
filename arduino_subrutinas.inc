@@ -511,8 +511,8 @@ AnalogReadSub:
 	EndWhileAR1:
 	read8 YL,ADCL
 	read8 YH,ADCH
-	st X+,YH
-	st X,YL
+	st X+,YL
+	st X,YH
 	EndAnalogRead:
 	ret
 

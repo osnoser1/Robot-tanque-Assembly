@@ -183,7 +183,7 @@ InitTeensyInternal:
 	// timer 0, fast pwm mode
 	assign8(TCCR0A, (1<<WGM00)|(1<<WGM01))
 	assign8(TCCR0B,(1<<CS00)|(1<<CS01)) // div 64 prescaler
-	sbi(TIMSK0, TOIE0)
+	sbi_preview(TIMSK0, TOIE0)
 	// timer 1, 8 bit phase correct pwm
 	assign8(TCCR1A, (1<<WGM10))
 	assign8(TCCR1B, (1<<CS11)) // div 8 prescaler

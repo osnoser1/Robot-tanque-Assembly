@@ -8,9 +8,24 @@
 	esNegro16 valCentroIzquierda,CENTRO_IZQUIERDA
 	esNegro16 valCentroDerecha,CENTRO_DERECHA
 	digitalWrite(vccA,valIzquierda)
-	digitalWrite(gndA,valDerecha)
-	digitalWrite(vccB,valCentroIzquierda)
-	digitalWrite(gndB,valCentroDerecha)
+	digitalWrite(gndA,valCentroIzquierda)
+	digitalWrite(vccB,valCentroDerecha)
+	digitalWrite(gndB,valDerecha)
+	digitalWritei(enableA,HIGHH)
+	digitalWritei(enableB,HIGHH)
+.ENDM
+
+.MACRO pruebaErrorSensoresLinea
+	LineaError_actualizar(linea_IZQUIERDA, IZQUIERDA)
+	LineaError_actualizar(linea_CENTRO_IZQUIERDA, CENTRO_IZQUIERDA)
+	LineaError_actualizar(linea_CENTRO_DERECHA, CENTRO_DERECHA)
+	LineaError_actualizar(linea_DERECHA, DERECHA)
+	digitalWrite(vccA, lineaError_Negro(linea_IZQUIERDA))
+	digitalWrite(gndA, lineaError_Negro(linea_CENTRO_IZQUIERDA))
+	digitalWrite(vccB, lineaError_Negro(linea_CENTRO_DERECHA))
+	digitalWrite(gndB, lineaError_Negro(linea_DERECHA))
+	digitalWritei(enableA,HIGHH)
+	digitalWritei(enableB,HIGHH)
 .ENDM
 
 // Prueba controlador de motor
@@ -64,6 +79,7 @@
 .ENDM
 
 .MACRO pruebaSistemaDisparo
+	SistDisparo_update(sist_disparo);
 	esNegro16 valDerecha,DERECHA
 	digitalWrite(ledPin, valDerecha)
 	cpi16 valDerecha, true

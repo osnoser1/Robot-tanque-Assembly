@@ -117,21 +117,23 @@ m8s_2:	sbrc	mp8s,0		;if current bit set
 
 ;***************************************************************************
 ;*
-;* "mpy16u" - 16x16 Bit Unsigned Multiplication
+;* "mpy16u" - Fast 16x16 Bit Unsigned Multiplication
 ;*
 ;* This subroutine multiplies the two 16-bit register variables 
 ;* mp16uH:mp16uL and mc16uH:mc16uL.
 ;* The result is placed in m16u3:m16u2:m16u1:m16u0.
 ;*  
-;* Number of words	:14 + return
-;* Number of cycles	:153 + return
+;* Number of words	:105 + return
+;* Number of cycles	:105 + return
 ;* Low registers used	:None
-;* High registers used  :7 (mp16uL,mp16uH,mc16uL/m16u0,mc16uH/m16u1,m16u2,
-;*                          m16u3,mcnt16u)	
+;* High registers used  :6 (mp16uL,mp16uH,mc16uL/m16u0,mc16uH/m16u1,m16u2,
+;*			    m16u3)	
 ;*
 ;***************************************************************************
 
 ;***** Subroutine Register Variables
+
+
 
 .def	mc16uL	=r16		;multiplicand low byte
 .def	mc16uH	=r17		;multiplicand high byte
@@ -141,25 +143,142 @@ m8s_2:	sbrc	mp8s,0		;if current bit set
 .def	m16u1	=r19		;result byte 1
 .def	m16u2	=r20		;result byte 2
 .def	m16u3	=r21		;result byte 3 (MSB)
-.def	mcnt16u	=r22		;loop counter
 
 ;***** Code
 
 mpy16u:	clr	m16u3		;clear 2 highest bytes of result
-	clr	m16u2
-	ldi	mcnt16u,16	;init loop counter
-	lsr	mp16uH
-	ror	mp16uL
+	clr	m16u2	
+	lsr	mp16uH		;rotate multiplier Low
+	ror	mp16uL		;rotate multiplier High
 
-m16u_1:	brcc	noad8		;if bit 0 of multiplier set
-	add	m16u2,mc16uL	;add multiplicand Low to byte 2 of res
-	adc	m16u3,mc16uH	;add multiplicand high to byte 3 of res
-noad8:	ror	m16u3		;shift right result byte 3
+	brcc	noadd0		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd0:	ror	m16u3		;shift right result byte 3
 	ror	m16u2		;rotate right result byte 2
 	ror	m16u1		;rotate result byte 1 and multiplier High
 	ror	m16u0		;rotate result byte 0 and multiplier Low
-	dec	mcnt16u		;decrement loop counter
-	brne	m16u_1		;if not done, loop more
+
+	brcc	noadd1		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd1:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd2		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd2:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd3		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd3:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd4		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd4:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd5		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd5:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd6		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd6:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd7		;if carry sett
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd7:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd8		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd8:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noadd9		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noadd9:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noad10		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noad10:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noad11		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noad11:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noad12		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noad12:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noad13		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noad13:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noad14		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noad14:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
+	brcc	noad15		;if carry set
+	add	m16u2,mc16uL	;    add multiplicand Low to byte 2 of res
+	adc	m16u3,mc16uH	;    add multiplicand high to byte 3 of res
+noad15:	ror	m16u3		;shift right result byte 3
+	ror	m16u2		;rotate right result byte 2
+	ror	m16u1		;rotate result byte 1 and multiplier High
+	ror	m16u0		;rotate result byte 0 and multiplier Low
+
 	ret
 
 
