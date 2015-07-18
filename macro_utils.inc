@@ -41,6 +41,8 @@
 #define SIZE_INT	2
 #define SIZE_LONG	4
 #define SIZE_BYTE	1
+#define MAX_INT		0x7fff
+#define MAX_UINT	MAX_INT * 2 + 1
 #define MAX_LONG	0x7fffffff
 #define MAX_ULONG	MAX_LONG * 2 + 1
 
@@ -190,10 +192,24 @@
 .ENDM
 
 // params @0 Registro, 16 bits
+// params @1 Registro, 16 bits
+.MACRO andCpw
+	cpc @0l,@1l
+	cpc @0h,@1h
+.ENDM
+
+// params @0 Registro, 16 bits
 // params @1 Valor inmediato
 .MACRO cpiw
 	ldiw T1,@1
 	cpw @0,T1
+.ENDM
+
+// params @0 Registro, 16 bits
+// params @1 Valor inmediato
+.MACRO andCpiw
+	ldiw T1,@1
+	andCpw @0,T1
 .ENDM
 
 // params @1 Registro, 16 bits
@@ -234,15 +250,15 @@
 // params @0 Par de registro
 // params @1 Dirección de memoria
 .MACRO read16
-	read8 @0l,@1 // Parte baja
 	read8 @0h,@1+1 // Parte alta
+	read8 @0l,@1 // Parte baja
 .ENDMACRO
 
 // params @0 Dirección de memoria
 // params @1 Par de registro
 .MACRO write16
-	write8 @0,@1l // Parte baja
 	write8 @0+1,@1h // Parte alta
+	write8 @0,@1l // Parte baja
 .ENDM
 
 // params @0 Par de registro
@@ -497,7 +513,7 @@
 // params @0 Dirección de memoria
 // params @1 Dirección de memoria
 .MACRO cp8
-	read8 rmp2,@0
+	read8 rmp1,@0
 	read8 rmp2,@1
 	cp rmp1,rmp2
 .ENDM
@@ -509,6 +525,14 @@
 	cpi rmp1,@1
 .ENDM
 
+// params @0 Dirección de memoria
+// params @1 Valor inmediato
+.MACRO andCpi8
+	read8 rmp1,@0
+	ldi rmp2,@1
+	cpc rmp1,rmp2
+.ENDM
+
 // *****************************************************************************
 // Manipulación de la SRAM, 16 bits
 // *****************************************************************************
@@ -518,6 +542,32 @@
 .MACRO m_copy16
 	read16 T1,@1
 	write16 @0,T1
+.ENDM
+
+// params @0 Dirección de memoria
+// params @1 Valor
+// params @2 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
+.MACRO assign16ge_2
+	brlt EndAssign16ge
+	.if @2 == 'i'
+		assign16(@0, @1)
+	.else 
+		copy16(@0, @1) 
+	.endif
+	EndAssign16ge:
+.ENDM
+
+// params @0 Dirección de memoria
+// params @1 Valor
+// params @2 Tipo @1: {'i': 'inmediato', 'v': 'variable'}
+.MACRO assign16lt_2
+	brge EndAssign16lt
+	.if @2 == 'i'
+		assign16(@0, @1)
+	.else 
+		copy16(@0, @1) 
+	.endif
+	EndAssign16lt:
 .ENDM
 
 // params @0 Dirección de memoria
@@ -806,6 +856,13 @@
 .MACRO cpi16
 	read16 V,@0
 	cpiw V,@1 // Usa registro T
+.ENDMACRO
+
+// params @0 Dirección de memoria
+// params @1 Valor inmediato
+.MACRO andCpi16
+	read16 V,@0
+	andCpiw V,@1 // Usa registro T
 .ENDMACRO
 
 // params @0 Dirección de memoria
@@ -1189,6 +1246,11 @@ _2div32_16:
 	pop_two R16,R17
 	out SREG,R16
 	pop R16
+.ENDM
+
+.MACRO m_assign_16
+	ldiw V,@1
+	write16 @0,V
 .ENDM
 
 // *****************************************************************************

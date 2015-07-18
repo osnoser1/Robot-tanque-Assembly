@@ -395,6 +395,88 @@ DigitalWriteSub:
 	EndDigitalWrite:
 	ret
 
+
+AnalogWriteSub16:
+	cpi rmp2,CORE_OC0B_PIN	; TIMER0B
+	brne PC+13
+		cpi rmp3,0
+		breq SetZeroOC0BPin16
+			out OCR0B,rmp3
+			or8(TCCR0A, (1<<COM0B1),i)
+			rjmp EndAnalogWrite16
+		SetZeroOC0BPin16:
+			cbi CORE_PIN0_PORTREG,CORE_PIN0_BIT
+			andOnPort TCCR0A,~(1<<COM0B1)
+			rjmp EndAnalogWrite16
+	cpi rmp2,CORE_OC1A_PIN ; TIMER1A
+	brne PC+5
+		; Copia de direcciones y máscara en registros temporarles
+		ldi XL,OCR1AL
+		ldi YL,TCCR1A
+		ldi rmp4,(1<<COM1A1)
+		rjmp ContinueAnalogWrite116
+	cpi rmp2,CORE_OC1B_PIN ; TIMER1B
+	brne PC+5
+		; Copia de direcciones y máscara en registros temporarles
+		ldi XL,OCR1BL
+		ldi YL, TCCR1A
+		ldi rmp4,(1<<COM1B1)
+		rjmp ContinueAnalogWrite116
+	cpi rmp2,CORE_OC1C_PIN ; TIMER1C
+	brne PC+5
+		; Copia de direcciones y máscara en registros temporarles
+		ldi XL,OCR1CL
+		ldi YL,TCCR1A
+		ldi rmp4,(1<<COM1C1)
+		rjmp ContinueAnalogWrite116
+	cpi rmp2,CORE_OC2A_PIN ; TIMER2A
+	brne PC+5
+		; Copia de direcciones y máscara en registros temporarles
+		ldi XL,OCR2A
+		ldi YL,TCCR2A
+		ldi rmp4,(1<<COM2A1)
+		rjmp ContinueAnalogWrite116
+	cpi rmp2,CORE_OC2B_PIN ; TIMER2B
+	brne PC+5
+		; Copia de direcciones y máscara en registros temporarles
+		ldi XL,OCR2B
+		ldi YL,TCCR2A
+		ldi rmp4,(1<<COM2B1)
+		rjmp ContinueAnalogWrite116
+	cpi rmp2,CORE_OC3A_PIN ; TIMER3A
+	brne PC+5
+		ldi XL,OCR3AL
+		ldi YL,TCCR3A
+		ldi rmp4,(1<<COM3A1)
+		rjmp ContinueAnalogWrite116
+	cpi rmp2,CORE_OC3B_PIN ; TIMER3B
+	brne PC+5
+		; Copia de direcciones y máscara en registros temporarles
+		ldi XL,OCR3BL
+		ldi YL,TCCR3A
+		ldi rmp4,(1<<COM3B1)
+		rjmp ContinueAnalogWrite116
+	cpi rmp2,CORE_OC3C_PIN ; TIMER3C
+	brne PC+5
+		; Copia de direcciones y máscara en registros temporarles
+		ldi XL,OCR3CL
+		ldi YL,TCCR3A
+		ldi rmp4,(1<<COM3C1)
+		rjmp ContinueAnalogWrite116
+	rjmp EndAnalogWrite16
+	ContinueAnalogWrite116:
+	; Borra direccion de byte alto en los 2 regustros temporales
+	CLR XH
+	CLR YH
+	; Envia valor V (pwm) recibido a la dirección almacenada en el registro X
+	stw X,V
+	; Operación or con contenido de dirección con registro rmp1
+	ld rmp1,Y
+	or rmp1,rmp4
+	st Y,rmp1
+	EndAnalogWrite16:
+	ret
+
 AnalogWriteSub:
 	cpi rmp2,CORE_OC0B_PIN	; TIMER0B
 	brne PC+13

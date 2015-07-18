@@ -9,10 +9,10 @@
 #include "casos_de_prueba.inc"
 
 #define ledPin					6
-#define vccA					10	// Izquierdo
-#define gndA					9	// Izquierdo
-#define vccB					8	// Derecho
-#define gndB					7	// Derecho
+#define vccA					9	// Izquierdo
+#define gndA					10	// Izquierdo
+#define vccB					7	// Derecho
+#define gndB					8 	// Derecho
 #define enableA					0
 #define enableB					1
 #define pingPin					13
@@ -25,13 +25,19 @@
 #define CENTRO_IZQUIERDA		A2
 #define CENTRO_DERECHA			A3 
 
-#define NEGRO					1
-#define BLANCO					0
+#define Negro					1
+#define Blanco					0
+
+#define SENTIDO_DERECHA			1
+#define SENTIDO_IZQUIERDA		0
+#define SIN_DETECCION			255
 
 #define EDO_ADELANTE			1
 #define EDO_DERECHA				2
 #define EDO_IZQUIERDA			3
 #define EDO_DETENIDO			4
+#define EDO_CRUCE_IZQUIERDA		5
+#define EDO_CRUCE_DERECHA		6
 
 #define EDO_0					0
 #define EDO_1					1
@@ -43,7 +49,7 @@
 #define LECTURAS_SENSOR_LINEA	1
 
 // Banderas manejo de error
-#define LECTURAS_DET_CRUCE		150
+#define LECTURAS_DET_CRUCE		700
 
 // #define IZDA_PASO_0				1
 byte_o(tempByte);
@@ -52,8 +58,6 @@ long_o(tempLong);
 
 int_o(i);
 
-int_o(varAnalog);
-int_o(varPwm);
 int_o(tmpLinea);
 int_o(sumLinea);
 int_o(valDerecha);
@@ -61,10 +65,15 @@ int_o(valIzquierda);
 int_o(valCentroDerecha);
 int_o(valCentroIzquierda);
 
-int_o(edoIzda);
 int_o(contDetectorCruce);
+int_o(estadoCruce)
+
+byte_o(enemigoDetectado)
 
 // Control sensor de linea
+
+#define cpLinea(_pin1,_edo1) cpi8 lineaError_##_edo1##(linea_##_pin1##),1
+#define cpLinea_2(_pin1,_pin2,_edo1,_edo2) m_cpLinea_2 lineaError_##_edo1##(linea_##_pin1##), lineaError_##_edo2##(linea_##_pin2##)
 
 // params @0 Direccion de memoria, 2 bytes.
 // params @1 Pin sensor de linea
@@ -143,6 +152,13 @@ leerSensoresLinea:
 	LineaError_actualizar(linea_DERECHA, DERECHA)
 	ret
 
+// params @0 Variable, 1 byte.
+// params @1 Variable, 1 byte.
+.MACRO m_cpLinea_2 
+	cpi8 @0,1
+	andCpi8 @1,1
+.ENDM
+
 // params @0 Rr
 // params @1 Rd
 // params @2 Constante
@@ -176,45 +192,9 @@ estadoIzquierda:
  	breq eiCambioEdoAdelante
 
  	jmp eiGiroRapidoIzda
-// #endregion
-
-// //	#region Consideración salida de borde
-//  	cpi16 edoIzda, EDO_0 // Sin salir del borde
-//  	brne elseIzda_1
-//  		cmpSensoresLinea_2 YL,YH,1,0
-//  			jne(eiGiroRapidoIzda)
-//  		cmpSensoresLinea_2 YL,YH,0,0
-//  			jne(eiGiroRapidoIzda)
-//  		assign16(edoIzda, EDO_1)
-//  		jmp eiDetener
-//  		jmp eiGiroRapidoIzda
-//  	elseIzda_1:
-//  	cpi16 edoIzda, EDO_1 // Ya salió del borde
-//  	brne elseIzda_2
-//  		cmpSensoresLinea_2 YL,YH,1,0
-//  			jne(eiGiroRapidoIzda)
-//  		cmpSensoresLinea_2 YL,YH,1,1
-//  		 	jne(eiGiroRapidoIzda)
-//  		assign16(edoIzda, EDO_2)
-//  		jmp eiGiroRapidoIzda
-//  	elseIzda_2:
-//  	brne eiDetener
-//  	cpi16 edoIzda, EDO_2 // Regresó al borde
-//  		cmpSensoresLinea_2 YL,YH,0,1
-//  			breq eiCambioEdoAdelante
-//  		cmpSensoresLinea_2 YL,YH,0,0
-//  		 	brne eiCambioEdoAdelante
-//  		jmp eiGiroRapidoIzda
-//  	eiDetener:
-//  		digitalWritei(ledPin, LOWW)
-//  		assign16(edoIzda, EDO_3)
-//  		assign16(estadoActual, EDO_DETENIDO)
-//  		call estadoDetenido
-//  		jmp EndEstadoIzquierda
-// //	#endregion
+// 	#endregion
  	eiCambioEdoAdelante:
  		// digitalWritei(ledPin, LOWW)
- 		assign16(edoIzda, EDO_3)
  		assign16(estadoActual, EDO_ADELANTE)
 		call estadoAdelante
 		jmp EndEstadoIzquierda
@@ -232,19 +212,29 @@ estadoAdelante:
  	read8 YH,valDerecha
 
  	// Iniciar contador determinar cruce
- 	cmpSensoresLinea_2 XL,XH,0,0
+ 	cpLinea_2(IZQUIERDA, CENTRO_IZQUIERDA, Blanco, Blanco)
+ 	// cmpSensoresLinea_2 XL,XH,0,0
  	brne ElseEaCpDetCruce
- 		digitalWritei(ledPin, LOWW)
+ 		// digitalWritei(ledPin, LOWW)
  		inc16 contDetectorCruce
  		jmp DoneEaCpDetCruce
  	ElseEaCpDetCruce:
  		cpi16 contDetectorCruce, LECTURAS_DET_CRUCE
  		jlt(ElseEaNoHayCruce)
- 		// 	assign16(estadoActual, EDO_DETENIDO)
-			// call estadoDetenido
-			jmp DoneEaCpDetCruce
+ 			// assign16(estadoActual, EDO_DETENIDO)
+ 			// call estadoDetenido
+ 			// jmp EndEstadoAdelante
+
+ 			assign16(estadoActual, EDO_CRUCE_IZQUIERDA)
+ 			assign16(estadoCruce, EDO_0)
+			call estadoCruceIzquierda
+			assign16(contDetectorCruce, 0)
+			jmp EndEstadoAdelante
  		ElseEaNoHayCruce:
- 	 		digitalWritei(ledPin, HIGHH)
+ 	 		// digitalWritei(ledPin, HIGHH)
+ 	 	// 	assign16(estadoActual, EDO_DETENIDO)
+ 			// call estadoDetenido
+ 			// jmp EndEstadoAdelante
  			assign16(contDetectorCruce, 0)
  	DoneEaCpDetCruce:
 
@@ -290,12 +280,31 @@ estadoAdelante:
 		cmpSensoresLinea_4 1,1,1,1
 		brne eaDetener
 			assign16(estadoActual, EDO_IZQUIERDA)
-			assign16(edoIzda, EDO_0)
 			call estadoIzquierda
 			jmp EndEstadoAdelante
 	eaDetener:
 		Motores_detener()
 	EndEstadoAdelante:
+	ret
+
+estadoCruceIzquierda:
+	Motores_giroRapidoIzquierda_2(255, 255)
+	cpLinea_2(CENTRO_DERECHA, DERECHA, Blanco, Blanco)
+	andCpi16 estadoCruce, EDO_0
+	brne CpEdo2CruceIzda
+		assign16(estadoCruce, EDO_1)
+		jmp EndEstadoCruceIzquierda
+	CpEdo2CruceIzda:
+		cpi16 estadoCruce, EDO_1
+			brne EndEstadoCruceIzquierda
+		cpLinea(CENTRO_DERECHA, Negro)
+			breq EsIgualEdo2CruceLinea
+		cpLinea(DERECHA, Negro)
+			brne EndEstadoCruceIzquierda
+		EsIgualEdo2CruceLinea:
+			assign16(estadoActual, EDO_ADELANTE)
+			call estadoAdelante
+	EndEstadoCruceIzquierda:
 	ret
 
 estadoDetenido:
@@ -315,8 +324,20 @@ actualizar:
 	brne PC+4
 		call estadoIzquierda
 		rjmp EndSwitchEstado
+	cpi16 estadoActual,EDO_CRUCE_IZQUIERDA
+	brne PC+4
+		call estadoCruceIzquierda
+		rjmp EndSwitchEstado
 	EndSwitchEstado:
 ret
+
+// params @0 Pin seleccionado
+// params @1 Valor comprendido entre 0 y 65535
+.MACRO analogWrite16i
+	ldi rmp2,@0
+	ldiw V,@1
+	call AnalogWriteSub16
+.ENDMACRO
 
 Setup:
 	Motores(vccA, gndA, enableA, vccB, gndB, enableB) // {izquierdo, derecho}
@@ -338,10 +359,12 @@ Setup:
 	int(estadoActual, EDO_ADELANTE)
 	int(varLedPin, 1)
 	assign16(contDetectorCruce, 0)
+	assign16(enemigoDetectado, SIN_DETECCION)
 	Servo(servo_ultrasonido, servoPin)
 	SistDisparo(sist_disparo, sistemaDisparoPin)
-	digitalWritei(ledPin, HIGHH)
+	// digitalWritei(ledPin, HIGHH)
 	// delay(2000)
+	// call initServo2
 	ret
 //
 // ============================================
@@ -353,50 +376,56 @@ Loop:
 
 	// Servo_update(servo_ultrasonido)
 	// SistDisparo_update(sist_disparo);
-	// cpMillis(tiempo_ping, 100, i);
-	// jlt(EndTiempoPing)
-	// 	copy32(tiempo_ping,tiempoEnMilis);
-	// 	Ping_fire(duration, 13);
-	// 	Ping_toCentimeters(duration);
-	// EndTiempoPing:
+	cpMillis(tiempo_ping, 100, i);
+	jlt(EndTiempoPing)
+		copy32(tiempo_ping,tiempoEnMilis);
+		Ping_fire(duration, 13);
+		Ping_toCentimeters(duration);
+	EndTiempoPing:
 
-	// cpi32 duration,60
-	// jlt(Menor)
-	// 	digitalWritei(ledPin, LOWW);
-	// 	Servo_microGiro(servo_ultrasonido, 4, true);
-	// 	rjmp EndMenor 
-	// Menor:
-	// 	Servo_microGiro(servo_ultrasonido, 4, false);
-	// 	// Comprobar si puede disparar
-	// 	cpi16 servo_Grados(servo_ultrasonido), 110
-	// 		jge(EndCompareDisparo)
-	// 	cpi16 servo_Grados(servo_ultrasonido), 70
-	// 		jlt(EndCompareDisparo)
-	// 	SistDisparo_press(sist_disparo);
-	// 	EndCompareDisparo:
-	// 	// Parpadeo del led
-	// 	copy(parpadeoLedPin, duration);
-	// 	map16i(parpadeoLedPin, 0, 60, 0, 384);
-	// 	cpMillis(tiempoActualLedPin, parpadeoLedPin, v);
-	// 		jlt(EndParpadeoLed)
-	// 	copy32(tiempoActualLedPin, tiempoEnMilis)
-	// 	negarBool16 varLedPin
-	// 	EndParpadeoLed:
-	// 	digitalWrite(ledPin, varLedPin);
-	// EndMenor:
+	cpi32 duration,60
+	jlt(Menor)
+		digitalWritei(ledPin, LOWW);
+		Servo_microGiro(servo_ultrasonido, 4, true);
+		rjmp EndMenor 
+	Menor:
+		Servo_microGiro(servo_ultrasonido, 4, false);
+		// Establacer sentido del enemigo detectado
+		cpi16 servo_Grados(servo_ultrasonido),90
+		assign16ge_2 enemigoDetectado,SENTIDO_IZQUIERDA,'i'
+		assign16lt_2 enemigoDetectado,SENTIDO_DERECHA,'i'
+
+		// Comprobar si puede disparar
+		cpi16 servo_Grados(servo_ultrasonido), 120
+			jge(EndCompareDisparo)
+		cpi16 servo_Grados(servo_ultrasonido), 60
+			jlt(EndCompareDisparo)
+		SistDisparo_press(sist_disparo);
+		EndCompareDisparo:
+		// Parpadeo del led
+		copy(parpadeoLedPin, duration);
+		map16i(parpadeoLedPin, 0, 60, 0, 384);
+		cpMillis(tiempoActualLedPin, parpadeoLedPin, v);
+			jlt(EndParpadeoLed)
+		copy32(tiempoActualLedPin, tiempoEnMilis)
+		negarBool16 varLedPin
+		EndParpadeoLed:
+		digitalWrite(ledPin, varLedPin);
+	EndMenor:
 
 	// Motores_adelante()
 	// Motor_adelante(motorDerecho)
 	// Motor_adelante(motorIzquierdo)
 
+	// call pruebaServo
 	// pruebaSensoresLinea
-	pouebaErrorSensoresLinea
+	// pruebaErrorSensoresLinea
 	// pruebaControladorMotor
 	// pruebaLatchingPing
 	// pruebaSistemaDisparo
 
-	// call leerSensoresLinea
-	// call actualizar
+	call leerSensoresLinea
+	call actualizar
 	// delay(100)
 	ret // go back to loop
 //

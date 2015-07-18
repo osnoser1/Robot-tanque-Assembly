@@ -9,6 +9,10 @@
 #define REFRESH_INTERVAL    20000     // minumim time to refresh servos in microseconds 
 
 #define usToTicks(_us) (clockCyclesPerMicrosecond()* (_us)) / 8  // converts microseconds to tick (assumes prescale of 8) 
+#define usToTicksVar(_var) m_usToTicks _var  // converts microseconds to tick (assumes prescale of 8) 
+
+.EQU OCR3_servo_ultrasonido	=	14
+.EQU OCR3_sist_disparo =		15
 
 #define TRIM_DURATION       2                               // compensation ticks to trim adjust for digitalWrite delays // 12 August 2009
 
@@ -18,12 +22,12 @@
 
 #define Servo(_var,_pin) malloc(_var,SERVO_SIZE) _servo_construct _var##,##_pin // 3 variables de 2 bytes
 #define Servo_write(_var,_value,_type) _servo_write _var,_value,_type
-#define Servo_writeMicroseconds(_var,_value,_type) _servo_writeMicroseconds _var,_value,_type
+#define Servo_writeMicroseconds(_var,_value,_type) _servo_writeMicroseconds _var,_value,_type,OCR3_##_var
 #define Servo_update(_var) _servo_update _var
 #define Servo_giro_5(_var, _millis, _bool, _limInf, _limSup) _servo_giro _var,_millis,_bool,_limInf,_limSup,'i','i'
 #define Servo_giro_3(_var, _millis, _bool) _servo_giro _var,_millis,_bool,0,180,'i','i'
 #define Servo_giro(_var, _millis, _bool, _limInf, _limSup,_type1,_type2) _servo_giro _var,_millis,_bool,_limInf,_limSup,_type1,_type2
-#define Servo_microGiro(_var, _millis, _bool) _servo_micro_giro _var,_millis,_bool,30,135,'i','i'
+#define Servo_microGiro(_var, _millis, _bool) _servo_micro_giro _var,_millis,_bool,0,180,'i','i'
 // Estructura: { servo_Pin, servoMin, servoMax }
 
 #define servo_Pin(_var) 				array_dir_16(_var, 0) 
@@ -57,6 +61,7 @@
 	assign16(servo_barridoLimSup(@0), 180)
 	assign16(servo_Grados(@0), 90)
 	assign16(servo_Sentido(@0), 1)
+	Servo_write(@0, 90, 'i')
 .ENDM
 
 // Macros para manipulación de estructura
@@ -93,6 +98,19 @@
 	assign16ge value_servo_write,MAX_PULSE_WIDTH,MAX_PULSE_WIDTH,'i','i'
 	subi16 value_servo_write, TRIM_DURATION
 	copy16(servo_PulseWidth(@0), value_servo_write)
+	usToTicksVar(value_servo_write)
+
+	in rmp1,SREG
+	write8 oldSREG,rmp1
+
+	cli()
+	.if @3 == 14
+		copy16(OCR3CL, value_servo_write)
+	.else
+		copy16(OCR3BL, value_servo_write)
+	.endif
+	read8 rmp1,oldSREG
+	out SREG,rmp1
 .ENDM
 
 // params @0 Variable
@@ -183,5 +201,16 @@
 		Servo_write(@0, servo_Grados(@0), 'v')
 	EndServoMicroGiro:
 .ENDM
+
+// clockCyclesPerMicrosecond()* _us) / 8
+// params @0 Variable
+.MACRO m_usToTicks
+	read16 T1,@0
+	ldiw T2,clockCyclesPerMicrosecond()
+	mul_32 N,T1,T2
+	ldiw T1,8
+	div_32_16 N,T1,VH
+	write16 @0,T3  // T3 es la parte baja de N
+.ENDM 
 
 #endif // _SERVO_INC

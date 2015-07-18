@@ -7,8 +7,10 @@
 #define Motores_adelante() m_motores_adelante
 #define Motores_detener() m_motores_detener
 #define Motores_retroceso() m_motores_retroceso
-#define Motores_giroRapidoIzquierda() m_motores_giro_rapido_izquierda
-#define Motores_giroRapidoDerecha() m_motores_giro_rapido_derecha
+#define Motores_giroRapidoIzquierda() m_motores_giro_rapido_izquierda 255,255
+#define Motores_giroRapidoIzquierda_2(_vel1,_vel2) m_motores_giro_rapido_izquierda _vel1,_vel2
+#define Motores_giroRapidoDerecha() m_motores_giro_rapido_derecha 255,255
+#define Motores_giroRapidoDerecha_2(_vel1,_vel2) m_motores_giro_rapido_derecha _vel1,_vel2
 #define Motores_giroIzquierda() m_motores_giro_izquierda
 #define Motores_giroDerecha() m_motores_giro_derecha
 
@@ -32,14 +34,18 @@
 	Motor_retroceso(motorIzquierdo)
 .ENDM
 
+// params @0 Velocidad, motor izquierdo
+// params @1 Velocidad, motor derecho
 .MACRO m_motores_giro_rapido_derecha
-	Motor_adelante(motorIzquierdo)
-	Motor_retroceso(motorDerecho)
+	Motor_adelante_2(motorIzquierdo, @0)
+	Motor_retroceso_2(motorDerecho, @1)
 .ENDM
 
+// params @0 Velocidad, motor izquierdo
+// params @1 Velocidad, motor derecho
 .MACRO m_motores_giro_rapido_izquierda
-	Motor_retroceso(motorIzquierdo)
-	Motor_adelante(motorDerecho)
+	Motor_retroceso_2(motorIzquierdo, @0)
+	Motor_adelante_2(motorDerecho, @1)
 .ENDM
 
 .MACRO m_motores_giro_derecha
