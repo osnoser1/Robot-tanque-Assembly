@@ -1,10 +1,10 @@
 #ifndef _SISTEMA_DISPARO_ASM_
 #define _SISTEMA_DISPARO_ASM_
 
-#define RETARDO 				2000 // 2 segundos
-#define DISPARO_ANGULO_1		40
-#define DISPARO_ANGULO_2 		100
-#define DISPARO_ANGULO_3 		180
+#define RETARDO 				3000 // 2 segundos
+#define DISPARO_ANGULO_1		120
+#define DISPARO_ANGULO_2 		60
+#define DISPARO_ANGULO_3 		0
 
 #define SistDisparo(_var,_pin) malloc(_var, SERVO_SIZE + 3 * SIZE_INT + 1 * SIZE_LONG) .EQU _var##_servo = array_dir_16(_var, 3) .EQU OCR3_##_var##_servo = 15 _sistema_disparo_construct _var,_pin // 3 variables de 2 bytes.
 #define SistDisparo_update(_var) _sistema_disparo_update _var
@@ -20,10 +20,10 @@
 // params @1 Pin
 .MACRO _sistema_disparo_construct
 	_servo_construct @0_servo,@1
-	Servo_write(@0_servo, 0, 'i')
+	Servo_write(@0_servo, 180, 'i')
 	assign32(disparo_TiempoActual(@0), 0)
-	assign16(disparo_Grados(@0), 0)
-	assign16(disparo_AnguloDisparo(@0), 0)
+	// assign16(disparo_Grados(@0), 0)
+	assign16(disparo_AnguloDisparo(@0), 180)
 	assign16(disparo_contadorDisparo(@0), 0)
 .ENDM
 
@@ -39,7 +39,7 @@
 		jlt(EndSistemaDisparoPress)
 	copy32(disparo_TiempoActual(@0), tiempoEnMilis)
 
-	cpi16 disparo_AnguloDisparo(@0),0
+	cpi16 disparo_AnguloDisparo(@0),180
 	ContInstInicialSistDispPress:
 	brne PC+ContInstFinalSistDispPress-ContInstInicialSistDispPress
 		assign16(disparo_AnguloDisparo(@0), DISPARO_ANGULO_1)
@@ -53,7 +53,7 @@
 	brne PC+ContInstFinalSistDispPress-ContInstInicialSistDispPress
 		assign16(disparo_AnguloDisparo(@0), DISPARO_ANGULO_3)
 		jmp EndSeleccionAngulo
-	assign16(disparo_AnguloDisparo(@0), 0)
+	assign16(disparo_AnguloDisparo(@0), 180)
 	EndSeleccionAngulo:
 
 	copy16(disparo_Grados(@0), disparo_AnguloDisparo(@0))

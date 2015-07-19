@@ -27,6 +27,7 @@ $RECYCLE.BIN/
 *.tmp
 *.obj
 *.lst
+*.eep
 
 # =========================
 # Operating System Files

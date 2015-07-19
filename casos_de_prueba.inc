@@ -52,7 +52,7 @@
 
 // Prueba integración latching con sensor ultrasónico PING
 .MACRO pruebaLatchingPing
-	Servo_update(servo_ultrasonido)
+	// Servo_update(servo_ultrasonido)
 	cpMillis(tiempo_ping, 100, i)
 	jlt(EndTiempoPing)
 		copy32(tiempo_ping,tiempoEnMilis)

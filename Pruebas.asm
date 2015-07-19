@@ -49,7 +49,7 @@
 #define LECTURAS_SENSOR_LINEA	1
 
 // Banderas manejo de error
-#define LECTURAS_DET_CRUCE		700
+#define LECTURAS_DET_CRUCE		1500
 
 // #define IZDA_PASO_0				1
 byte_o(tempByte);
@@ -68,7 +68,7 @@ int_o(valCentroIzquierda);
 int_o(contDetectorCruce);
 int_o(estadoCruce)
 
-byte_o(enemigoDetectado)
+byte_o(enemigoDetectado);
 
 // Control sensor de linea
 
@@ -215,7 +215,7 @@ estadoAdelante:
  	cpLinea_2(IZQUIERDA, CENTRO_IZQUIERDA, Blanco, Blanco)
  	// cmpSensoresLinea_2 XL,XH,0,0
  	brne ElseEaCpDetCruce
- 		// digitalWritei(ledPin, LOWW)
+ 		digitalWritei(ledPin, LOWW)
  		inc16 contDetectorCruce
  		jmp DoneEaCpDetCruce
  	ElseEaCpDetCruce:
@@ -231,7 +231,7 @@ estadoAdelante:
 			assign16(contDetectorCruce, 0)
 			jmp EndEstadoAdelante
  		ElseEaNoHayCruce:
- 	 		// digitalWritei(ledPin, HIGHH)
+ 	 		digitalWritei(ledPin, HIGHH)
  	 	// 	assign16(estadoActual, EDO_DETENIDO)
  			// call estadoDetenido
  			// jmp EndEstadoAdelante
@@ -252,7 +252,7 @@ estadoAdelante:
  	jmp eaInicioCpDerecha
 
 	eaAdelante:
-		Motores_adelante();
+		Motores_adelante_2(255, 240);
 		jmp EndEstadoAdelante
 	eaInicioCpDerecha:
 		cmpSensoresLinea_4 1,1,0,0
@@ -263,7 +263,8 @@ estadoAdelante:
 	 	jmp eaInicioCpIzquierda
 
 	eaDerecha:
-		Motores_giroDerecha()
+		// Motores_giroDerecha()
+		Motores_adelante_2(255, 200)
 		jmp EndEstadoAdelante
 	eaInicioCpIzquierda:
 		cmpSensoresLinea_4 0,0,1,1
@@ -274,7 +275,8 @@ estadoAdelante:
 	 	jmp eaInicioCpCambioEdoIzda
 
 	eaIzquierda:
-		Motores_giroIzquierda()
+		// Motores_giroIzquierda()
+	Motores_adelante_2(200, 255)
 		jmp EndEstadoAdelante
 	eaInicioCpCambioEdoIzda:
 		cmpSensoresLinea_4 1,1,1,1
@@ -374,8 +376,28 @@ Setup:
 Loop:
 	// digitalWrite(ledPin, varLedPin)
 
-	// Servo_update(servo_ultrasonido)
-	// SistDisparo_update(sist_disparo);
+	call DeteccionEnemigo
+
+	// SistDisparo_press(sist_disparo);
+	// Servo_microGiro(servo_ultrasonido, 4, true);
+
+	// Motores_adelante()
+	// Motor_adelante(motorDerecho)
+	// Motor_adelante(motorIzquierdo)
+
+	// call pruebaServo
+	// pruebaSensoresLinea
+	// pruebaErrorSensoresLinea
+	// pruebaControladorMotor
+	// pruebaLatchingPing
+	// pruebaSistemaDisparo
+
+	call leerSensoresLinea
+	call actualizar
+	// delay(100)
+	ret // go back to loop
+
+DeteccionEnemigo:
 	cpMillis(tiempo_ping, 100, i);
 	jlt(EndTiempoPing)
 		copy32(tiempo_ping,tiempoEnMilis);
@@ -412,22 +434,8 @@ Loop:
 		EndParpadeoLed:
 		digitalWrite(ledPin, varLedPin);
 	EndMenor:
+	ret
 
-	// Motores_adelante()
-	// Motor_adelante(motorDerecho)
-	// Motor_adelante(motorIzquierdo)
-
-	// call pruebaServo
-	// pruebaSensoresLinea
-	// pruebaErrorSensoresLinea
-	// pruebaControladorMotor
-	// pruebaLatchingPing
-	// pruebaSistemaDisparo
-
-	call leerSensoresLinea
-	call actualizar
-	// delay(100)
-	ret // go back to loop
 //
 // End of source code
 //

@@ -4,7 +4,8 @@
 #include "Motor.asm"
 
 #define Motores(_vcc1, _gnd1, _enable1, _vcc2, _gnd2, _enable2) m_motores _vcc1, _gnd1, _enable1, _vcc2, _gnd2, _enable2
-#define Motores_adelante() m_motores_adelante
+#define Motores_adelante() m_motores_adelante 255,255
+#define Motores_adelante_2(_vel1,_vel2) m_motores_adelante _vel1,_vel2
 #define Motores_detener() m_motores_detener
 #define Motores_retroceso() m_motores_retroceso
 #define Motores_giroRapidoIzquierda() m_motores_giro_rapido_izquierda 255,255
@@ -19,9 +20,11 @@
 	Motor(motorDerecho, @3, @4, @5)
 .ENDM
 
+// params @0 Velocidad, motor izquierdo
+// params @1 Velocidad, motor derecho
 .MACRO m_motores_adelante
-	Motor_adelante(motorDerecho)
-	Motor_adelante(motorIzquierdo)
+	Motor_adelante_2(motorDerecho, @1)
+	Motor_adelante_2(motorIzquierdo, @0)
 .ENDM
 
 .MACRO m_motores_detener
