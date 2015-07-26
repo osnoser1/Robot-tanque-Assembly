@@ -277,16 +277,10 @@
 
 // params @0 Pin seleccionado
 // params @1 Direccion de memoria, 1 byte.
-.MACRO analogWrite8
+.MACRO analogWrite
 	ldi rmp2,@0
 	read8 rmp3,@1
 	call AnalogWriteSub
-.ENDMACRO
-
-// params @0 Pin seleccionado
-// params @1 Direccion de memoria, 2 bytes.
-.MACRO analogWrite16
-	analogWrite8 @0,@1+1
 .ENDMACRO
 
 // params @0 Dirección de memoria, 2 bytes

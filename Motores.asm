@@ -3,14 +3,18 @@
 
 #include "Motor.asm"
 
+
+#define VEL_MOTOR_IZDO			255
+#define VEL_MOTOR_DCHO			251
+
 #define Motores(_vcc1, _gnd1, _enable1, _vcc2, _gnd2, _enable2) m_motores _vcc1, _gnd1, _enable1, _vcc2, _gnd2, _enable2
-#define Motores_adelante() m_motores_adelante 255,255
+#define Motores_adelante() m_motores_adelante VEL_MOTOR_IZDO,VEL_MOTOR_DCHO
 #define Motores_adelante_2(_vel1,_vel2) m_motores_adelante _vel1,_vel2
 #define Motores_detener() m_motores_detener
 #define Motores_retroceso() m_motores_retroceso
-#define Motores_giroRapidoIzquierda() m_motores_giro_rapido_izquierda 255,255
+#define Motores_giroRapidoIzquierda() m_motores_giro_rapido_izquierda VEL_MOTOR_IZDO,VEL_MOTOR_DCHO
 #define Motores_giroRapidoIzquierda_2(_vel1,_vel2) m_motores_giro_rapido_izquierda _vel1,_vel2
-#define Motores_giroRapidoDerecha() m_motores_giro_rapido_derecha 255,255
+#define Motores_giroRapidoDerecha() m_motores_giro_rapido_derecha VEL_MOTOR_IZDO,VEL_MOTOR_DCHO
 #define Motores_giroRapidoDerecha_2(_vel1,_vel2) m_motores_giro_rapido_derecha _vel1,_vel2
 #define Motores_giroIzquierda() m_motores_giro_izquierda
 #define Motores_giroDerecha() m_motores_giro_derecha

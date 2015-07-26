@@ -76,10 +76,12 @@
 	nop
 	reti // Int vector 2
 	nop
-	reti // Int vector 3
-	nop
-	reti // Int vector 4
-	nop
+	jmp INT_vect
+	// reti // Int vector 3
+	// nop
+	jmp INT_vect
+	// reti // Int vector 4
+	// nop
 	reti // Int vector 5
 	nop
 	reti // Int vector 6

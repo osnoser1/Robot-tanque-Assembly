@@ -442,6 +442,10 @@
 
 // wiring.h
 
+#define CHANGE 1
+#define FALLING 2
+#define RISING 3
+
 #define clockCyclesPerMicrosecond() ( F_CPU / 1000000 )
 
 // pins_teensy.c
