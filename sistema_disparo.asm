@@ -1,12 +1,12 @@
 #ifndef _SISTEMA_DISPARO_ASM_
 #define _SISTEMA_DISPARO_ASM_
 
-#define RETARDO 				3000 // 2 segundos
+#define RETARDO 				2000 // 2 segundos
 #define DISPARO_ANGULO_1		120
 #define DISPARO_ANGULO_2 		60
 #define DISPARO_ANGULO_3 		0
 
-#define SistDisparo(_var,_pin) malloc(_var, SERVO_SIZE + 3 * SIZE_INT + 1 * SIZE_LONG) .EQU _var##Pin = _pin .EQU _var##_servo = array_dir_16(_var, 3) .EQU OCR3_##_var##_servo = 15 _sistema_disparo_construct _var,_pin // 3 variables de 2 bytes.
+#define SistDisparo(_var,_pin) malloc(_var, SERVO_SIZE + 3 * SIZE_INT + 1 * SIZE_LONG) .EQU _var##Pin = _pin .EQU _var##_servo = array_dir_16(_var, 3) .EQU OCR3_##_var##_servo = _pin _sistema_disparo_construct _var,_pin // 3 variables de 2 bytes.
 #define SistDisparo_update(_var) _sistema_disparo_update _var
 #define SistDisparo_press(_var) _sistema_disparo_press _var
 #define SistDisparo_reset(_var) _sistema_disparo_reset _var,##_var##Pin

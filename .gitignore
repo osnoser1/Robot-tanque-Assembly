@@ -28,6 +28,8 @@ $RECYCLE.BIN/
 *.obj
 *.lst
 *.eep
+*.sublime-workspace
+*.sublime-project
 
 # =========================
 # Operating System Files

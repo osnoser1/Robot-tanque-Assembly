@@ -43,6 +43,14 @@
 	ldie @0,0,1
 .ENDMACRO
 
+// Variable
+// Pin seleccionado
+.MACRO digitalReadi
+	read8 rmp2,@0
+	digitalRead rmp2,@1
+	write8 @0,rmp2
+.ENDMACRO
+
 .MACRO digitalRead
 	cmp @1,0
 	brne PC+10

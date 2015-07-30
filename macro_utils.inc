@@ -469,6 +469,22 @@
 // *****************************************************************************
 
 // params @0 Variable
+.MACRO negarBool8
+	read8 rmp1,@0
+	cpi rmp1,0
+	breq nbCambio1
+		ldi rmp1,0
+		jmp ContinueNegarBool8
+	nbCambio1:
+		ldi rmp1,1
+	ContinueNegarBool8:
+	write8 @0,rmp1
+	EndNegarBool8:
+.ENDM
+
+
+
+// params @0 Variable
 // params @1 Valor inmediato
 .MACRO m_or8_i
 	.if @0 < 64

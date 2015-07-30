@@ -56,6 +56,7 @@
 
 // Banderas manejo de error
 #define LECTURAS_DET_CRUCE		600
+#define TIEMPO_PERSISTENCIA_CRUCES		300
 
 // #define IZDA_PASO_0				1
 byte_o(tempByte);
@@ -73,10 +74,15 @@ int_o(valCentroIzquierda);
 
 int_o(contDetectorCruceIzda);
 int_o(contDetectorCruceDcha);
-byte_o(cruceIzda);
-byte_o(cruceDcha);
+long_o(tiempoCruce);
 byte_o(hayCruceDerecha);
 byte_o(hayCruceIzquierda);
+
+byte_o(hayCruceDerechaAnterior);
+byte_o(hayCruceIzquierdaAnterior);
+long_o(tiempoPersistenciaCruceIzquierda);
+long_o(tiempoPersistenciaCruceDerecha);
+
 int_o(estadoCruce);
 
 byte_o(enemigoDetectado);
@@ -88,6 +94,10 @@ byte_o(estrategiaActual);
 #define cpLinea(_pin1,_edo1) cpi8 lineaError_##_edo1##(linea_##_pin1##),1
 #define cpLinea_2(_pin1,_pin2,_edo1,_edo2) m_cpLinea_2 lineaError_##_edo1##(linea_##_pin1##), lineaError_##_edo2##(linea_##_pin2##)
 #define cpLinea_4(_edo1,_edo2,_edo3,_edo4) m_cpLinea_4 lineaError_##_edo1##(linea_IZQUIERDA), lineaError_##_edo2##(linea_CENTRO_IZQUIERDA), lineaError_##_edo3##(linea_CENTRO_DERECHA), lineaError_##_edo4##(linea_DERECHA)
+#define andCpLinea(_pin1,_edo1) andCpi8 lineaError_##_edo1##(linea_##_pin1##),1
+#define andCpLinea_2(_pin1,_pin2,_edo1,_edo2) m_andCpLinea_2 lineaError_##_edo1##(linea_##_pin1##), lineaError_##_edo2##(linea_##_pin2##)
+#define setCruce(_dir, _boolean) m_setCruce hayCruce##_dir,hayCruce##_dir##Anterior,_boolean,tiempoPersistenciaCruce##_dir
+
 
 // Interrupcion externa
 INT_vect:
@@ -100,8 +110,8 @@ IniciarInterrupcionesExternas:
 	pinMode(impactoPin2, INPUT_PULLUP)
 	digitalWritei(impactoPin1, HIGHH)
 	digitalWritei(impactoPin2, HIGHH)
-	assign8(EICRA, (FALLING << ISC30) | (FALLING << ISC20))
-	assign8(EIMSK, _BV(INT3) | _BV(INT2))
+	// assign8(EICRA, (FALLING << ISC30) | (FALLING << ISC20))
+	// assign8(EIMSK, _BV(INT3) | _BV(INT2))
 	ret
 
 // Control sensor de linea
@@ -196,24 +206,22 @@ leerSensoresLinea:
 	andCpi8 @3,1
 .ENDM
 
-// params @0 Rr
-// params @1 Rd
-// params @2 Constante
-// params @3 Constante
-.MACRO cmpSensoresLinea_2
-	cpi @0,@2
-	andCp @1,@3
+// params @0 Variable, 1 byte.
+// params @1 Variable, 1 byte.
+.MACRO m_andCpLinea_2 
+	andCpi8 @0,1
+	andCpi8 @1,1
 .ENDM
 
-// params @0 Constante
-// params @1 Constante
-// params @2 Constante
-// params @3 Constante
-.MACRO cmpSensoresLinea_4
-	cpi XL,@0
-	andCp XH,@1
-	andCp YL,@2
-	andCp YH,@3
+// params @0 Variable, cruceActual, 1 byte.
+// params @1 Variable, cruceAnterior, 1 byte.
+// params @2 Constante, boolean.
+.MACRO m_setCruce
+	.if @2 == true
+		assign8(@1, true);
+		copy32(@3, tiempoEnMilis)
+	.endif
+	assign8(@0, @2);
 .ENDM
 
 estadoIzquierda:
@@ -237,17 +245,6 @@ estadoIzquierda:
  	ret
 
 estadoDerecha:
-	// digitalWritei(ledPin, HIGHH)
-//	#region Sin considerar salida de borde
-
-	// cpLinea(IZQUIERDA, Negro)
-	// brne NoEsIgualTest
-	// 	digitalWritei(ledPin, HIGHH)
-	// 	jmp EndIgualTest
-	// NoEsIgualTest:
- // 		digitalWritei(ledPin, LOWW)
- // 	EndIgualTest:
-
  	cpLinea_2(IZQUIERDA, CENTRO_IZQUIERDA, Negro, Blanco)
  		breq edCambioEdoAdelante
  	cpLinea_2(IZQUIERDA, CENTRO_IZQUIERDA, Blanco, Blanco)
@@ -265,58 +262,70 @@ estadoDerecha:
  	EndEstadoDerecha:
  	ret
 
-estadoAdelante:
- 	// Iniciar contador determinar cruce izquierda
- 	// cpLinea_2(IZQUIERDA, CENTRO_IZQUIERDA, Blanco, Blanco)
- 	// brne ElseEaCpDetCruceIzda
- 	// 	// digitalWritei(ledPin, LOWW)
- 	// 	inc16 contDetectorCruceIzda
- 	// 	jmp DoneEaCpDetCruceIzda
- 	// ElseEaCpDetCruceIzda:
- 	// 	cpi16 contDetectorCruceIzda, LECTURAS_DET_CRUCE
- 	// 	jlt(ElseEaNoHayCruceIzda)
- 	// 		cpLinea_4(Negro, Negro, Negro, Negro)
- 	// 			jeq(EjecutarCruceBorde)
- 	// 		assign16(estadoActual, EDO_CRUCE_IZQUIERDA)
- 	// 		assign16(estadoCruce, EDO_0)
-		// 	call estadoCruceIzquierda
-		// 	assign16(contDetectorCruceIzda, 0)
- 	// 		inc8 cruceIzda
-		// 	jmp EndEstadoAdelante
- 	// 	ElseEaNoHayCruceIzda:
- 	//  		// digitalWritei(ledPin, HIGHH)
- 	// 		assign16(contDetectorCruceIzda, 0)
- 	// DoneEaCpDetCruceIzda:
+ElseCpCruceDcha:
+	cpi16 contDetectorCruceDcha, LECTURAS_DET_CRUCE
+	jlt(ElseElseEaNoHayCruceDcha)
+		setCruce(Derecha, true)
+		jmp EndElseCpCruceDcha
+	ElseElseEaNoHayCruceDcha:
+		setCruce(Derecha, false)
+	EndElseCpCruceDcha:
+	assign16(contDetectorCruceDcha, 0)
+	ret
 
- 	// Iniciar contador determinar cruce derecha
+ElseCpCruceIzda:
+	cpi16 contDetectorCruceIzda, LECTURAS_DET_CRUCE
+	jlt(ElseElseEaNoHayCruceIzda)
+ 		setCruce(Izquierda, true)
+		jmp EndElseCpCruceIzda
+	ElseElseEaNoHayCruceIzda:
+ 		setCruce(Izquierda, false)
+	EndElseCpCruceIzda:
+	assign16(contDetectorCruceIzda, 0)
+	ret
+
+estadoAdelante:
+	// Iniciar contador determinar cruce
  	cpLinea_2(DERECHA, CENTRO_DERECHA, Blanco, Blanco)
  	brne ElseEaCpDetCruceDcha
- 		// digitalWritei(ledPin, LOWW)
  		inc16 contDetectorCruceDcha
  		jmp DoneEaCpDetCruceDcha
  	ElseEaCpDetCruceDcha:
  		cpi16 contDetectorCruceDcha, LECTURAS_DET_CRUCE
  		jlt(ElseEaNoHayCruceDcha)
- 			cpLinea_4(Negro, Negro, Negro, Negro)
- 				jeq(EjecutarCruceBorde)
-			assign16(contDetectorCruceDcha, 0)
- 			inc8 cruceDcha
- 			assign8(hayCruceDerecha, true)
-			jmp EndEstadoAdelante
- 		ElseEaNoHayCruceDcha:
- 	 		// digitalWritei(ledPin, HIGHH)
+ 			// cpLinea_4(Negro, Negro, Negro, Negro)
+ 			// 	jeq(EjecutarCruceBorde)	
  			assign16(contDetectorCruceDcha, 0)
- 			assign8(hayCruceDerecha, false)
+ 			setCruce(Derecha, true)
+	 		call ElseCpCruceIzda
+ 			jmp DoneEaCpDetCruce
+ 		ElseEaNoHayCruceDcha:
+ 			assign16(contDetectorCruceDcha, 0)
+ 			setCruce(Derecha, false)
  	DoneEaCpDetCruceDcha:
+ 	cpLinea_2(IZQUIERDA, CENTRO_IZQUIERDA, Blanco, Blanco)
+	brne ElseEaCpDetCruceIzda
+ 		inc16 contDetectorCruceIzda
+		digitalWritei(ledPin, HIGHH)
+ 		jmp DoneEaCpDetCruce
+ 	ElseEaCpDetCruceIzda:
+		digitalWritei(ledPin, LOWW)
+ 		cpi16 contDetectorCruceIzda, LECTURAS_DET_CRUCE
+ 		jlt(ElseEaNoHayCruceIzda)
+ 			// cpLinea_4(Negro, Negro, Negro, Negro)
+ 			// 	jeq(EjecutarCruceBorde)
+ 			assign16(contDetectorCruceIzda, 0)
+ 			setCruce(Izquierda, true)
+ 			Motores_detener()
+ 			call ElseCpCruceDcha
+ 			jmp DoneEaCpDetCruce
+ 		ElseEaNoHayCruceIzda:
+ 			assign16(contDetectorCruceIzda, 0)
+ 			setCruce(Izquierda, false)
+ 	DoneEaCpDetCruce:
 
  	// Motores adelante
- 	cpLinea_4(Blanco, Blanco, Blanco, Blanco)
- 		breq eaAdelante
- 	cpLinea_4(Negro, Blanco, Blanco, Negro)
- 		breq eaAdelante
- 	cpLinea_4(Blanco, Blanco, Blanco, Negro)
- 		breq eaAdelante
- 	cpLinea_4(Negro, Blanco, Blanco, Blanco)
+ 	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Blanco, Blanco)
  		breq eaAdelante
 
  	jmp eaInicioCpDerecha
@@ -325,103 +334,75 @@ estadoAdelante:
 		Motores_adelante();
 		jmp EndEstadoAdelante
 	eaInicioCpDerecha:
-		cpLinea_4(Negro, Negro, Blanco, Blanco)
+		cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Blanco)
 	 		breq eaDerecha
-	 	cpLinea_4(Negro, Negro, Blanco, Negro)
-	 		breq eaDerecha
-	 	cpLinea_4(Blanco, Negro, Blanco, Blanco) // No debería ocurrir, corrección de error
-	 		breq eaDerecha
+	 	// cpLinea_4(Blanco, Negro, Blanco, Blanco) // No debería ocurrir, corrección de error
+	 	// 	breq eaDerecha
 
 	 	jmp eaInicioCpIzquierda
 
 	eaDerecha:
-		Motores_giroDerecha()
-		// Motores_adelante_2(255, 200)
+		// Motores_giroDerecha()
+		Motores_adelante_2(255, 50)
 		jmp EndEstadoAdelante
 	eaInicioCpIzquierda:
-		cpLinea_4(Blanco, Blanco, Negro, Negro)
-	 		breq eaIzquierda
-	 	cpLinea_4(Negro, Blanco, Negro, Negro)
+		cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Blanco, Negro)
 	 		breq eaIzquierda
 
 	 	jmp eaInicioCpCambioEdoIzda
 
 	eaIzquierda:
-		Motores_giroIzquierda()
-		// Motores_adelante_2(200, 255)
+		// Motores_giroIzquierda()
+		Motores_adelante_2(50, 255)
 		jmp EndEstadoAdelante
 	eaInicioCpCambioEdoIzda:
-		cpLinea_4(Negro, Negro, Negro, Negro)
+		cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
 			brne eaDetener
 		EjecutarCruceBorde:
-			assign8(cruceIzda, 0)
-			assign8(cruceDcha, 0)
 			// assign16(estadoActual, EDO_IZQUIERDA)
 			// call estadoIzquierda
-			assign16(estadoActual, EDO_DERECHA)
-			call estadoDerecha
+			// assign16(estadoActual, EDO_DERECHA)
+			// call estadoDerecha
 			jmp EndEstadoAdelante
 	eaDetener:
 		Motores_detener()
 	EndEstadoAdelante:
 	ret
 
-estadoCruceIzquierda:
+estadoCruceIzquierda_2:
+	// digitalWritei(ledPin, HIGHH)
+	// Motores_detener()
+	// jmp EndEstadoCruceIzquierda_2
 	Motores_giroRapidoIzquierda_2(255, 255)
-	cpLinea_2(CENTRO_DERECHA, DERECHA, Blanco, Blanco)
-	andCpi16 estadoCruce, EDO_0
-	brne Cp2daCondicionCruce
-		assign16(estadoCruce, EDO_1)
-		jmp EndEstadoCruceIzquierda
-	Cp2daCondicionCruce:
-	cpLinea_2(CENTRO_DERECHA, DERECHA, Negro, Negro)
-	andCpi16 estadoCruce, EDO_0
-	brne CpEdo2CruceIzda
-		assign8(cruceIzda, 0)
-		assign8(cruceDcha, 0)
-		assign16(estadoActual, EDO_IZQUIERDA)
-		call estadoIzquierda
-		jmp EndEstadoCruceIzquierda
-	CpEdo2CruceIzda:
-		cpi16 estadoCruce, EDO_1
-			brne EndEstadoCruceIzquierda
-		cpLinea(CENTRO_DERECHA, Negro)
-			breq EsIgualEdo2CruceLinea
-		cpLinea(DERECHA, Negro)
-			brne EndEstadoCruceIzquierda
-		EsIgualEdo2CruceLinea:
-			assign16(estadoActual, EDO_ADELANTE)
-			call estadoAdelante
-	EndEstadoCruceIzquierda:
+	cpMillis(tiempoCruce, 1500, i);
+		jlt(EndEstadoCruceIzquierda_2)
+	cpLinea(CENTRO_DERECHA, Negro)
+		breq eci_2EsIgualEdo2CruceLinea
+	cpLinea(DERECHA, Negro)
+		brne EndEstadoCruceIzquierda_2
+	eci_2EsIgualEdo2CruceLinea:
+		assign16(estadoActual, EDO_ADELANTE)
+		// digitalWritei(ledPin, LOWW)
+		call estadoAdelante
+	EndEstadoCruceIzquierda_2:
 	ret
 
-estadoCruceDerecha:
+estadoCruceDerecha_2:
+	// digitalWritei(ledPin, HIGHH)
+	// Motores_detener()
+	// jmp EndEstadoCruceDerecha_2
 	Motores_giroRapidoDerecha_2(255, 255)
-	cpLinea_2(CENTRO_IZQUIERDA, IZQUIERDA, Blanco, Blanco)
-	andCpi16 estadoCruce, EDO_0
-	brne ecdCp2daCondicionCruce
-		assign16(estadoCruce, EDO_1)
-		jmp EndEstadoCruceDerecha
-	ecdCp2daCondicionCruce:
-	cpLinea_2(CENTRO_IZQUIERDA, IZQUIERDA, Negro, Negro)
-	andCpi16 estadoCruce, EDO_0
-	brne ecdCpEdo2CruceDcha
-		assign8(cruceIzda, 0)
-		assign8(cruceDcha, 0)
-		assign16(estadoActual, EDO_DERECHA)
-		call estadoDerecha
-		jmp EndEstadoCruceDerecha
-	ecdCpEdo2CruceDcha:
-		cpi16 estadoCruce, EDO_1
-			brne EndEstadoCruceDerecha
-		cpLinea(CENTRO_IZQUIERDA, Negro)
-			breq ecdEsIgualEdo2CruceLinea
-		cpLinea(IZQUIERDA, Negro)
-			brne EndEstadoCruceDerecha
-		ecdEsIgualEdo2CruceLinea:
-			assign16(estadoActual, EDO_ADELANTE)
-			call estadoAdelante
-	EndEstadoCruceDerecha:
+	cpMillis(tiempoCruce, 1500, i);
+		jlt(EndEstadoCruceDerecha_2)
+	cpLinea(CENTRO_IZQUIERDA, Negro)
+		breq ecd_2EsIgualEdo2CruceLinea
+	cpLinea(IZQUIERDA, Negro)
+		brne EndEstadoCruceDerecha_2
+	ecd_2EsIgualEdo2CruceLinea:
+		assign16(estadoActual, EDO_ADELANTE)
+		// digitalWritei(ledPin, LOWW)
+		call estadoAdelante
+	EndEstadoCruceDerecha_2:
 	ret
 
 estadoDetenido:
@@ -429,12 +410,51 @@ estadoDetenido:
 	ret
 
 estrategiaAtaque_1:
-	cpi8 hayCruceDerecha, true
-	jne(EndEstrategiaAtaque_1)
-		assign8(hayCruceDerecha, false)
+	cpi16 estadoActual, EDO_ADELANTE
+		jne(EndEstrategiaAtaque_1)
+	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
+	andCpi8 hayCruceIzquierdaAnterior, false
+	andCpi8 hayCruceDerechaAnterior, true
+	brne eat_1SiguienteCp1
+		// digitalWritei(ledPin, HIGHH)
+		assign8(hayCruceDerechaAnterior, false)
+		copy32(tiempoCruce, tiempoEnMilis)
 		assign16(estadoActual, EDO_CRUCE_DERECHA)
- 		assign16(estadoCruce, EDO_0)
-		call estadoCruceDerecha
+		call estadoCruceDerecha_2
+		jmp EndEstrategiaAtaque_1
+	eat_1SiguienteCp1:
+
+	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
+	andCpi8 hayCruceIzquierdaAnterior, true
+	andCpi8 hayCruceDerechaAnterior, false
+	brne eat_1SiguienteCp2
+		// digitalWritei(ledPin, HIGHH)
+		assign8(hayCruceIzquierdaAnterior, false)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_IZQUIERDA)
+		call estadoCruceIzquierda_2
+		jmp EndEstrategiaAtaque_1
+	eat_1SiguienteCp2:
+
+	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
+	andCpi8 hayCruceIzquierdaAnterior, true
+	andCpi8 hayCruceDerechaAnterior, true
+	brne eat_1SiguienteCp3
+		// digitalWritei(ledPin, HIGHH)
+		assign8(hayCruceIzquierdaAnterior, false)
+		assign8(hayCruceDerechaAnterior, false)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_DERECHA)
+		call estadoCruceDerecha_2
+		jmp EndEstrategiaAtaque_1
+	eat_1SiguienteCp3:
+	// cpi8 hayCruceDerecha, true
+	// jne(EndEstrategiaAtaque_1)
+	// 	assign8(hayCruceDerecha, false)
+	// 	assign16(estadoActual, EDO_CRUCE_DERECHA)
+	// 	assign16(estadoCruce, EDO_0)
+	// 	copy32(tiempoCruce, tiempoEnMilis)
+	// 	call estadoCruceDerecha_2
 	EndEstrategiaAtaque_1:
 	ret
 
@@ -442,6 +462,17 @@ estrategiaAtaque_2:
 	ret
 
 estrategiaHuida:
+	ret
+
+persistenciaCruces:
+	cpMillis(tiempoPersistenciaCruceDerecha, TIEMPO_PERSISTENCIA_CRUCES, i);
+	jlt(pcComp_2)
+		assign8(hayCruceDerechaAnterior, false);
+	pcComp_2:
+	cpMillis(tiempoPersistenciaCruceIzquierda, TIEMPO_PERSISTENCIA_CRUCES, i);
+	jlt(EndPersistenciaCruces)
+		assign8(hayCruceIzquierdaAnterior, false);
+	EndPersistenciaCruces:
 	ret
 
 actualizar:
@@ -459,7 +490,7 @@ actualizar:
 		rjmp EndSwitchEstado
 	cpi16 estadoActual,EDO_CRUCE_IZQUIERDA
 	brne PC+4
-		call estadoCruceIzquierda
+		call estadoCruceIzquierda_2
 		rjmp EndSwitchEstado
 	cpi16 estadoActual,EDO_DERECHA
 	brne PC+4
@@ -467,7 +498,7 @@ actualizar:
 		rjmp EndSwitchEstado
 	cpi16 estadoActual,EDO_CRUCE_DERECHA
 	brne PC+4
-		call estadoCruceDerecha
+		call estadoCruceDerecha_2
 		rjmp EndSwitchEstado
 	EndSwitchEstado:
 ret
@@ -486,6 +517,11 @@ actualizarEstrategia:
 		call estrategiaHuida
 		rjmp EndSwitchEstrategia
 	EndSwitchEstrategia:
+	ret
+
+ImpactoManual:
+	digitalReadi fueImpactado,impactoPin1 
+	negarBool8 fueImpactado
 	ret
 
 // params @0 Pin seleccionado
@@ -520,14 +556,14 @@ Setup:
 	assign8(estrategiaActual, ESTRATEGIA_ATAQUE_1)
 	assign16(contDetectorCruceIzda, 0)
 	assign16(contDetectorCruceDcha, 0)
-	assign8(cruceDcha, 0)
-	assign8(cruceIzda, 0)
 	assign8(hayCruceIzquierda, false);
 	assign8(hayCruceDerecha, false);
+	assign8(hayCruceIzquierdaAnterior, false);
+	assign8(hayCruceDerechaAnterior, false);
 	assign16(enemigoDetectado, SIN_DETECCION)
 	Servo(servo_ultrasonido, servoPin)
 	SistDisparo(sist_disparo, sistemaDisparoPin)
-	call IniciarInterrupcionesExternas
+	// call IniciarInterrupcionesExternas
 	// digitalWritei(ledPin, HIGHH)
 	// delay(2000)
 	// call initServo2
@@ -539,8 +575,9 @@ Setup:
 //
 Loop:
 	// digitalWrite(ledPin, varLedPin)
-	call ComprobarImpacto
-		jeq(EndLoop)
+	// call ImpactoManual
+	// call ComprobarImpacto
+	// 	jeq(EndLoop)
 	call DeteccionEnemigo
 
 	// SistDisparo_press(sist_disparo);
@@ -558,7 +595,7 @@ Loop:
 	// pruebaControladorMotor
 	// pruebaLatchingPing
 	// pruebaSistemaDisparo
-
+	call persistenciaCruces
 	call leerSensoresLinea
 	call actualizar
 	call actualizarEstrategia
