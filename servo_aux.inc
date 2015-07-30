@@ -179,8 +179,8 @@
  		cpMillis(servo_TiempoActualGiro(@0), @1, i)
  			jlt(EndServoMicroGiro)
 		copy32(servo_TiempoActualGiro(@0), tiempoEnMilis)
-		assignToOther16lt servo_Sentido(@0),1,servo_Grados(@0),servo_barridoLimInf(@0),'i','v','v'
-		assignToOther16ge servo_Sentido(@0),-1,servo_Grados(@0),servo_barridoLimSup(@0),'i','v','v'
+		assignToOther16lt servo_Sentido(@0),4,servo_Grados(@0),servo_barridoLimInf(@0),'i','v','v'
+		assignToOther16ge servo_Sentido(@0),-4,servo_Grados(@0),servo_barridoLimSup(@0),'i','v','v'
 		cp16 servo_Grados(@0), servo_barridoLimSup(@0)
 		brge SumaEsp
 			jmp EndSumaEsp
