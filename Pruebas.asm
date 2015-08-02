@@ -30,6 +30,7 @@
 #define Negro					1
 #define Blanco					0
 
+#define SENTIDO_CENTRO			2
 #define SENTIDO_DERECHA			1
 #define SENTIDO_IZQUIERDA		0
 #define SIN_DETECCION			255
@@ -57,6 +58,10 @@
 // Banderas manejo de error
 #define LECTURAS_DET_CRUCE		600
 #define TIEMPO_PERSISTENCIA_CRUCES		300
+
+// Banderas distancia del sensor ultrasónico
+#define DISTANCIA_DETECCION		70
+#define DISTANCIA_DISPARO		70
 
 // #define IZDA_PASO_0				1
 byte_o(tempByte);
@@ -485,16 +490,14 @@ estrategiaAtaque_2:
 		jmp EndEstrategiaAtaque_2
 	eat_2SiguienteCp2:
 
-	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
-	andCpi8 hayCruceIzquierdaAnterior, true
-	andCpi8 hayCruceDerechaAnterior, true
+	cpi8 enemigoDetectado,SENTIDO_IZQUIERDA
+	andCpi8 hayCruceIzquierdaAnterior,true
 	brne eat_2SiguienteCp3
-		// digitalWritei(ledPin, HIGHH)
 		assign8(hayCruceIzquierdaAnterior, false)
-		assign8(hayCruceDerechaAnterior, false)
+		assign8(enemigoDetectado,SIN_DETECCION)
 		copy32(tiempoCruce, tiempoEnMilis)
-		assign16(estadoActual, EDO_CRUCE_DERECHA)
-		call estadoCruceDerecha_2
+		assign16(estadoActual, EDO_CRUCE_IZQUIERDA)
+		call estadoCruceIzquierda_2
 		jmp EndEstrategiaAtaque_2
 	eat_2SiguienteCp3:
 	cpi8 enemigoDetectado,SENTIDO_DERECHA
@@ -507,16 +510,19 @@ estrategiaAtaque_2:
 		call estadoCruceDerecha_2
 		jmp EndEstrategiaAtaque_2
 	eat_2SiguienteCp4:
-	cpi8 enemigoDetectado,SENTIDO_IZQUIERDA
-	andCpi8 hayCruceIzquierdaAnterior,true
+
+	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
+	andCpi8 hayCruceIzquierdaAnterior, true
+	andCpi8 hayCruceDerechaAnterior, true
 	brne eat_2SiguienteCp5
+		// digitalWritei(ledPin, HIGHH)
 		assign8(hayCruceIzquierdaAnterior, false)
-		assign8(enemigoDetectado,SIN_DETECCION)
+		assign8(hayCruceDerechaAnterior, false)
 		copy32(tiempoCruce, tiempoEnMilis)
-		assign16(estadoActual, EDO_CRUCE_IZQUIERDA)
-		call estadoCruceIzquierda_2
+		assign16(estadoActual, EDO_CRUCE_DERECHA)
+		call estadoCruceDerecha_2
 		jmp EndEstrategiaAtaque_2
-	eat_2SiguienteCp5:
+	eat_2SiguienteCp5:	
 	// cpi8 hayCruceDerecha, true
 	// jne(EndEstrategiaAtaque_2)
 	// 	assign8(hayCruceDerecha, false)
@@ -528,6 +534,79 @@ estrategiaAtaque_2:
 	ret
 
 estrategiaHuida:
+	cpi16 estadoActual, EDO_ADELANTE
+		jne(EndEstrategiaHuida_2)
+	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
+	andCpi8 hayCruceIzquierdaAnterior, false
+	andCpi8 hayCruceDerechaAnterior, true
+	brne ehu_1SiguienteCp1
+		// digitalWritei(ledPin, HIGHH)
+		assign8(hayCruceDerechaAnterior, false)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_DERECHA)
+		call estadoCruceDerecha_2
+		jmp EndEstrategiaHuida_2
+	ehu_1SiguienteCp1:
+
+	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
+	andCpi8 hayCruceIzquierdaAnterior, true
+	andCpi8 hayCruceDerechaAnterior, false
+	brne ehu_1SiguienteCp2
+		// digitalWritei(ledPin, HIGHH)
+		assign8(hayCruceIzquierdaAnterior, false)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_IZQUIERDA)
+		call estadoCruceIzquierda_2
+		jmp EndEstrategiaHuida_2
+	ehu_1SiguienteCp2:
+
+	cpLinea_2(CENTRO_IZQUIERDA, CENTRO_DERECHA, Negro, Negro)
+	andCpi8 hayCruceIzquierdaAnterior, true
+	andCpi8 hayCruceDerechaAnterior, true
+	brne ehu_1SiguienteCp3
+		// digitalWritei(ledPin, HIGHH)
+		assign8(hayCruceIzquierdaAnterior, false)
+		assign8(hayCruceDerechaAnterior, false)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_DERECHA)
+		call estadoCruceDerecha_2
+		jmp EndEstrategiaHuida_2
+	ehu_1SiguienteCp3:
+
+	cpi8 enemigoDetectado,SENTIDO_CENTRO
+	andCpi8 hayCruceDerechaAnterior,true
+	brne ehu_1SiguienteCp4
+		assign8(hayCruceDerechaAnterior, false)
+		assign8(enemigoDetectado,SIN_DETECCION)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_DERECHA)
+		call estadoCruceDerecha_2
+		jmp EndEstrategiaHuida_2
+	ehu_1SiguienteCp4:
+
+	cpi8 enemigoDetectado,SENTIDO_CENTRO
+	andCpi8 hayCruceDerechaAnterior,true
+	brne ehu_1SiguienteCp5
+		assign8(hayCruceDerechaAnterior, false)
+		assign8(enemigoDetectado,SIN_DETECCION)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_DERECHA)
+		call estadoCruceDerecha_2
+		jmp EndEstrategiaHuida_2
+	ehu_1SiguienteCp5:
+
+	cpi8 enemigoDetectado,SENTIDO_CENTRO
+	andCpi8 hayCruceIzquierdaAnterior,true
+	brne ehu_1SiguienteCp6
+		assign8(hayCruceIzquierdaAnterior, false)
+		assign8(enemigoDetectado,SIN_DETECCION)
+		copy32(tiempoCruce, tiempoEnMilis)
+		assign16(estadoActual, EDO_CRUCE_IZQUIERDA)
+		call estadoCruceIzquierda_2
+		jmp EndEstrategiaHuida_2
+	ehu_1SiguienteCp6:
+
+	EndEstrategiaHuida_2:
 	ret
 
 persistenciaCruces:
@@ -539,6 +618,17 @@ persistenciaCruces:
 	jlt(EndPersistenciaCruces)
 		assign8(hayCruceIzquierdaAnterior, false);
 	EndPersistenciaCruces:
+	ret
+
+estadoEstrategia:
+	cpi16 disparo_contadorDisparo(sist_disparo), 3
+	jlt(eeCambioEstrategia_2)
+		assign8(estrategiaActual, ESTRATEGIA_HUIDA)
+		jmp EndEstadoEstrategia
+	eeCambioEstrategia_2:
+		assign8(estrategiaActual, ESTRATEGIA_ATAQUE_2)
+		// assign8(estrategiaActual, ESTRATEGIA_ATAQUE_1)
+	EndEstadoEstrategia:
 	ret
 
 actualizar:
@@ -586,7 +676,7 @@ actualizarEstrategia:
 	ret
 
 ImpactoManual:
-	digitalReadi fueImpactado,impactoPin1 
+	digitalReadi fueImpactado,impactoPin2
 	negarBool8 fueImpactado
 	ret
 
@@ -619,7 +709,7 @@ Setup:
 	int(varLedPin, 1)
 	assign8(fueImpactado, false)
 	assign8(estaApagado, false)
-	assign8(estrategiaActual, ESTRATEGIA_ATAQUE_2)
+	// assign8(estrategiaActual, ESTRATEGIA_HUIDA)
 	assign16(contDetectorCruceIzda, 0)
 	assign16(contDetectorCruceDcha, 0)
 	assign8(hayCruceIzquierda, false);
@@ -629,7 +719,7 @@ Setup:
 	assign16(enemigoDetectado, SIN_DETECCION)
 	Servo(servo_ultrasonido, servoPin)
 	SistDisparo(sist_disparo, sistemaDisparoPin)
-	// call IniciarInterrupcionesExternas
+	call IniciarInterrupcionesExternas
 	// digitalWritei(ledPin, HIGHH)
 	// delay(2000)
 	// call initServo2
@@ -641,9 +731,9 @@ Setup:
 //
 Loop:
 	// digitalWrite(ledPin, varLedPin)
-	// call ImpactoManual
-	// call ComprobarImpacto
-	// 	jeq(EndLoop)
+	call ImpactoManual
+	call ComprobarImpacto
+		jeq(EndLoop)
 	call DeteccionEnemigo
 
 	// SistDisparo_press(sist_disparo);
@@ -661,6 +751,7 @@ Loop:
 	// pruebaControladorMotor
 	// pruebaLatchingPing
 	// pruebaSistemaDisparo
+	call estadoEstrategia
 	call persistenciaCruces
 	call leerSensoresLinea
 	call actualizar
@@ -678,31 +769,27 @@ DeteccionEnemigo:
 		Ping_toCentimeters(duration);
 	EndTiempoPing:
 
-	cpi32 duration,60
-	jlt(Menor)
+	cpi32 duration,DISTANCIA_DETECCION
+	jlt(MenorDeteccion)
 		// digitalWritei(ledPin, LOWW);
 		Servo_microGiro(servo_ultrasonido, 16, true);
 		rjmp EndMenor 
-	Menor:
+	MenorDeteccion:
 		Servo_microGiro(servo_ultrasonido, 16, false);
 		// Establacer sentido del enemigo detectado
-		cpi16 servo_Grados(servo_ultrasonido),130
+		cpi16 servo_Grados(servo_ultrasonido),120
 		jlt(em_cp_2)
 			assign16(enemigoDetectado,SENTIDO_IZQUIERDA)
 			jmp end_em_cp
 		em_cp_2:
-		cpi16 servo_Grados(servo_ultrasonido),50
-		jge(end_em_cp)
+		cpi16 servo_Grados(servo_ultrasonido),60
+		jge(em_cp_3)
 			assign16(enemigoDetectado,SENTIDO_DERECHA)
 			jmp end_em_cp
+		em_cp_3:
+			assign16(enemigoDetectado,SENTIDO_CENTRO)
+			jmp end_em_cp
 		end_em_cp: 
-		// Comprobar si puede disparar
-		cpi16 servo_Grados(servo_ultrasonido), 110
-			jge(EndCompareDisparo)
-		cpi16 servo_Grados(servo_ultrasonido), 70
-			jlt(EndCompareDisparo)
-		SistDisparo_press(sist_disparo);
-		EndCompareDisparo:
 		// Parpadeo del led
 		copy(parpadeoLedPin, duration);
 		map16i(parpadeoLedPin, 0, 60, 0, 384);
@@ -712,6 +799,15 @@ DeteccionEnemigo:
 		negarBool16 varLedPin
 		EndParpadeoLed:
 		// digitalWrite(ledPin, varLedPin);
+		// Comprobar si puede disparar
+		cpi32 duration,DISTANCIA_DISPARO
+			jge(EndMenor)
+		cpi16 servo_Grados(servo_ultrasonido), 100
+			jge(EndCompareDisparo)
+		cpi16 servo_Grados(servo_ultrasonido), 80
+			jlt(EndCompareDisparo)
+		SistDisparo_press(sist_disparo);
+		EndCompareDisparo:
 	EndMenor:
 	ret
 

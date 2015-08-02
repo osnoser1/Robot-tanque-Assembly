@@ -63,6 +63,8 @@
 	assign16(disparo_AnguloDisparo(@0), 180)
 	EndSeleccionAngulo:
 
+	inc16 disparo_contadorDisparo(@0)
+
 	copy16(disparo_Grados(@0), disparo_AnguloDisparo(@0))
 	assign16ge disparo_Grados(@0),181,0,'i','i'
 	Servo_write(@0_servo, disparo_Grados(@0), 'v')
